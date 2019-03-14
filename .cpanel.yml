@@ -1,5 +1,5 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home3/hochpcco/public_html/test
+    - export DEPLOYPATH=/home3/hochpcco/public_html/5etools
     - /bin/cp -R * $DEPLOYPATH
