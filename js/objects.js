@@ -2,14 +2,30 @@
 
 const JSON_URL = "data/objects.json";
 
-window.onload = function load () {
-	DataUtil.loadJSON(JSON_URL, onJsonLoad);
+function imgError (x) {
+	if (x) $(x).remove();
+	$(`.rnd-name`).find(`span.stats-source`).css("margin-right", "0");
+}
+
+function handleStatblockScroll (event, ele) {
+	$(`#token_image`)
+		.toggle(ele.scrollTop < 32)
+		.css({
+			opacity: (32 - ele.scrollTop) / 32,
+			top: -ele.scrollTop
+		})
+}
+
+window.onload = async function load () {
+	await ExcludeUtil.pInitialise();
+	SortUtil.initHandleFilterButtonClicks();
+	DataUtil.loadJSON(JSON_URL).then(onJsonLoad);
 };
 
 let list;
 function onJsonLoad (data) {
 	list = ListUtil.search({
-		valueNames: ["name", "size", "source"],
+		valueNames: ["name", "size", "source", "uniqueid"],
 		listClass: "objects",
 		sortFunction: SortUtil.listSort
 	});
@@ -26,11 +42,25 @@ function onJsonLoad (data) {
 	ListUtil.initGenericPinnable();
 
 	addObjects(data);
-	BrewUtil.addBrewData(addObjects);
-	BrewUtil.makeBrewButton("manage-brew");
-	BrewUtil.bind({list});
+	BrewUtil.pAddBrewData()
+		.then(handleBrew)
+		.then(() => BrewUtil.bind({list}))
+		.then(() => BrewUtil.pAddLocalBrewData())
+		.catch(BrewUtil.pPurgeBrew)
+		.then(async () => {
+			BrewUtil.makeBrewButton("manage-brew");
+			BrewUtil.bind({list});
+			await ListUtil.pLoadState();
+			ListUtil.addListShowHide();
 
-	History.init();
+			History.init(true);
+			ExcludeUtil.checkShowAllExcluded(objectsList, $(`#pagecontent`));
+		});
+}
+
+function handleBrew (homebrew) {
+	addObjects(homebrew);
+	return Promise.resolve();
 }
 
 let objectsList = [];
@@ -43,14 +73,17 @@ function addObjects (data) {
 	let tempString = "";
 	for (; obI < objectsList.length; obI++) {
 		const obj = objectsList[obI];
+		if (ExcludeUtil.isExcluded(obj.name, "object", obj.source)) continue;
 		const abvSource = Parser.sourceJsonToAbv(obj.source);
 
 		tempString += `
 			<li class="row" ${FLTR_ID}="${obI}" onclick="ListUtil.toggleSelected(event, this)" oncontextmenu="ListUtil.openContextMenu(event, this)">
 				<a id="${obI}" href="#${UrlUtil.autoEncodeHash(obj)}" title="${obj.name}">
-					<span class="name col-xs-8">${obj.name}</span>
-					<span class="size col-xs-2">${Parser.sizeAbvToFull(obj.size)}</span>
-					<span class="source col-xs-2 source${abvSource}" title="${Parser.sourceJsonToFull(obj.source)}">${abvSource}</span>
+					<span class="name col-8">${obj.name}</span>
+					<span class="size col-2">${Parser.sizeAbvToFull(obj.size)}</span>
+					<span class="source col-2 text-align-center ${Parser.sourceJsonToColor(obj.source)}" title="${Parser.sourceJsonToFull(obj.source)}">${abvSource}</span>
+					
+					<span class="uniqueid hidden">${obj.uniqueId ? obj.uniqueId : obI}</span>
 				</a>
 			</li>
 		`;
@@ -69,23 +102,26 @@ function addObjects (data) {
 	});
 	ListUtil.bindPinButton();
 	EntryRenderer.hover.bindPopoutButton(objectsList);
-	ListUtil.loadState();
+	ListUtil.bindDownloadButton();
+	ListUtil.bindUploadButton();
 }
 
 function getSublistItem (obj, pinId) {
 	return `
 		<li class="row" ${FLTR_ID}="${pinId}" oncontextmenu="ListUtil.openSubContextMenu(event, this)">
 			<a href="#${UrlUtil.autoEncodeHash(obj)}" title="${obj.name}">
-				<span class="name col-xs-9">${obj.name}</span>		
-				<span class="ability col-xs-3">${Parser.sizeAbvToFull(obj.size)}</span>		
-				<span class="id hidden">${pinId}</span>				
+				<span class="name col-9">${obj.name}</span>
+				<span class="ability col-3">${Parser.sizeAbvToFull(obj.size)}</span>
+				<span class="id hidden">${pinId}</span>
 			</a>
 		</li>
 	`;
 }
 
-const renderer = new EntryRenderer();
+const renderer = EntryRenderer.getDefaultRenderer();
 function loadhash (jsonIndex) {
+	renderer.setFirstSection(true);
+
 	const obj = objectsList[jsonIndex];
 
 	const renderStack = [];
@@ -93,30 +129,32 @@ function loadhash (jsonIndex) {
 	if (obj.entries) renderer.recursiveEntryRender({entries: obj.entries}, renderStack, 2);
 	if (obj.actionEntries) renderer.recursiveEntryRender({entries: obj.actionEntries}, renderStack, 2);
 
-	const $content = $(`#pagecontent`);
-	$content.html(`
+	const $content = $(`#pagecontent`).empty();
+	$content.append(`
 		${EntryRenderer.utils.getBorderTr()}
 		${EntryRenderer.utils.getNameTr(obj)}
-		<tr class="text"><td colspan="6"><i>${obj.type !== "generic" ? `${Parser.sizeAbvToFull(obj.size)} object` : `Variable size object`}</i><br></td></tr>
+		<tr class="text"><td colspan="6"><i>${obj.type !== "GEN" ? `${Parser.sizeAbvToFull(obj.size)} object` : `Variable size object`}</i><br></td></tr>
 		<tr class="text"><td colspan="6">
 			<b>Armor Class:</b> ${obj.ac}<br>
 			<b>Hit Points:</b> ${obj.hp}<br>
 			<b>Damage Immunities:</b> ${obj.immune}<br>
+			${obj.resist ? `<b>Damage Resistances:</b> ${obj.resist}<br>` : ""}
+			${obj.vulnerable ? `<b>Damage Vulnerabilities:</b> ${obj.vulnerable}<br>` : ""}
 		</td></tr>
 		<tr class="text"><td colspan="6">${renderStack.join("")}</td></tr>
 		${EntryRenderer.utils.getPageTr(obj)}
 		${EntryRenderer.utils.getBorderTr()}
 	`);
 
-	const imgLink = obj.tokenURL || UrlUtil.link(`img/objects/${obj.name.replace(/"/g, "")}.png`);
-	$("th.name").append(`
-		<a href="${imgLink}" target="_blank">
-			<img src="${imgLink}" class="token" onerror="imgError(this)">
-		</a>`
-	);
-}
+	const $floatToken = $(`#float-token`).empty();
+	if (obj.tokenUrl || !obj.uniqueId) {
+		const imgLink = obj.tokenUrl || UrlUtil.link(`img/objects/${obj.name.replace(/"/g, "")}.png`);
+		$floatToken.append(`
+			<a href="${imgLink}" target="_blank" rel="noopener">
+				<img src="${imgLink}" id="token_image" class="token" onerror="imgError(this)" alt="${obj.name}">
+			</a>`
+		);
+	} else imgError();
 
-function imgError (x) {
-	$(x).closest("th").find(`span.stats-source`).css("margin-right", "0");
-	$(x).remove();
+	ListUtil.updateSelected();
 }

@@ -11,8 +11,14 @@
  * See the docs for each function for full explanations.
  */
 class FilterBox {
-	static getSelectedSources () {
-		const parsed = StorageUtil.getForPage(FilterBox._STORAGE_NAME);
+	static async pGetSelectedSources () {
+		let parsed;
+		try {
+			parsed = await StorageUtil.pGetForPage(FilterBox._STORAGE_NAME);
+		} catch (e) {
+			setTimeout(() => { throw e });
+			parsed = null;
+		}
 		if (parsed) {
 			const sources = parsed[FilterBox.SOURCE_HEADER];
 			if (sources) {
@@ -53,460 +59,1024 @@ class FilterBox {
 		this.filterList = filterList;
 
 		this.headers = {};
-		this.$disabledOverlay = $(`<div class="list-disabled-overlay"/>`);
+		this.multiHeaders = {};
+		this.$disabledOverlay = $(`<div class="homebrew-overlay"/>`);
 
-		// clean legacy cookies
-		// TODO remove this somewhere down the line
-		Cookies.remove(FilterBox._STORAGE_NAME);
-		Cookies.remove(FilterBox._STORAGE_NAME, {path: window.location.pathname});
-		// end clean legacy cookies
-
-		this.storedValues = StorageUtil.getForPage(FilterBox._STORAGE_NAME);
 		this.$rendered = [];
 		this.dropdownVisible = false;
 		this.modeAndOr = "AND";
 		this.$txtCount = $(`<span style="margin-left: auto"/>`);
+		this.$filterButton = null;
+		this._$outer = null;
+
+		this._doSaveStateDebounced = MiscUtil.debounce(() => this.__pDoSaveState(), 50);
+	}
+
+	async pDoLoadState () {
+		try {
+			this.storedMeta = await StorageUtil.pGetForPage(FilterBox._STORAGE_NAME_META);
+			this.storedValues = await StorageUtil.pGetForPage(FilterBox._STORAGE_NAME);
+			this.storedVisible = await StorageUtil.pGetForPage(FilterBox._STORAGE_NAME_VISIBLE);
+			this.storedGroupState = await StorageUtil.pGetForPage(FilterBox._STORAGE_NAME_GROUP_STATE);
+			this.storedNestState = await StorageUtil.pGetForPage(FilterBox._STORAGE_NAME_NEST_STATE);
+		} catch (e) {
+			setTimeout(() => { throw e });
+			this.storedMeta = null;
+			this.storedValues = null;
+			this.storedVisible = null;
+			this.storedGroupState = null;
+			this.storedNestState = null;
+		}
+	}
+
+	__pDoSaveState () {
+		return Promise.all([
+			StorageUtil.pSetForPage(FilterBox._STORAGE_NAME_META, this._getMeta()),
+			StorageUtil.pSetForPage(FilterBox._STORAGE_NAME, this.getValues()),
+			StorageUtil.pSetForPage(FilterBox._STORAGE_NAME_VISIBLE, this._getVisible()),
+			StorageUtil.pSetForPage(FilterBox._STORAGE_NAME_GROUP_STATE, this._getGroupState()),
+			StorageUtil.pSetForPage(FilterBox._STORAGE_NAME_NEST_STATE, this._getNestState())
+		]);
+	}
+
+	_getMeta () {
+		return {modeAndOr: this.modeAndOr};
 	}
 
 	/**
 	 * Render the "Filters" button in the inputGroup
 	 */
 	render () {
-		const firstRender = this.$rendered.length === 0;
+		const firstRender = this.$rendered.length === 0 || History.initialLoad;
 		// save the current values to re-apply if we're re-rendering
-		const curValues = firstRender ? null : this.getValues();
+		this._curState = {
+			values: firstRender ? null : this.getValues(),
+			visible: firstRender ? null : this._getVisible(),
+			groupState: firstRender ? null : this._getGroupState(),
+			nestState: firstRender ? null : this._getNestState()
+		};
+
+		// if first render and stored values, apply saved metadata
+		if (firstRender && this.storedMeta) {
+			this.modeAndOr = this.storedMeta.modeAndOr || "AND";
+		}
+
 		// remove any previously rendered elements
 		this._wipeRendered();
 
 		this.$list = $(`#listcontainer`).find(`.list`);
 
-		const $filterButton = getFilterButton();
-		this.$miniView = getMiniView();
+		const $filterButton = this.$filterButton = this._getFilterButton();
+		this.$miniView = $(`<div class="mini-view btn-group"/>`);
 		const $inputGroup = $(this.inputGroup);
 
-		const $outer = makeOuterList();
-		const self = this;
+		const $btnShowAll = $(`<button id="fltr-show-all" class="btn btn-xs btn-default">Show All</button>`).click(() => this.showAll());
+		const $btnHideAll = $(`<button id="fltr-hide-all" class="btn btn-xs btn-default">Hide All</button>`).click(() => this.hideAll());
+		const $btnReset = $(`<button id="fltr-reset" class="btn btn-xs btn-default">Reset</button>`).click((evt) => this.reset(evt.shiftKey));
+
+		this._$outer = $(`<div class="dropdown-menu ${FilterBox.CLS_DROPDOWN_MENU_FILTER} homebrew-window">
+			<h4 class="title">
+				<span>Filters</span>
+				<div>
+					<div class="btn-group">
+						<div data-r="$btnShowAll"/>
+						<div data-r="$btnHideAll"/>
+					</div>
+					<div data-r="$btnReset"/>
+				</div>
+			</h4>
+			<hr style="margin-top: 0; margin-bottom: 7px;">
+		</div>`).swap({$btnShowAll, $btnHideAll, $btnReset}).hide();
+
+		this._showAll = () => {
+			const $btns = this._$outer.find(`.show-hide-button`);
+			$btns.each((i, e) => {
+				if ($(e).text() === "Show") $(e).click();
+			});
+		};
+		this._hideAll = () => {
+			const $btns = this._$outer.find(`.show-hide-button`);
+			$btns.each((i, e) => {
+				if ($(e).text() === "Hide") $(e).click();
+			});
+		};
+
 		const $hdrLine = $(`<li class="filter-item"/>`);
 		const $hdrLineInner = $(`<div class="h-wrap"/>`).appendTo($hdrLine);
 		if (this.filterList.length > 1) {
 			const $btnAndOr = $(`<button class="btn btn-default btn-xs" style="width: 3em;">${this.modeAndOr}</button>`)
 				.data("andor", this.modeAndOr)
-				.on(EVNT_CLICK, () => {
+				.click(() => {
 					const nxt = $btnAndOr.data("andor") === "OR" ? "AND" : "OR";
-					self.modeAndOr = nxt;
+					this.modeAndOr = nxt;
 					$btnAndOr.text(nxt);
 					$btnAndOr.data("andor", nxt);
 				});
 			$hdrLineInner.append(`Combine filters as... `).append(`<div style="display: inline-block; width: 10px;"/>`).append($btnAndOr);
 		}
 		$hdrLineInner.append(this.$txtCount);
-		if (!this.filterList[0].minimalUI) $outer.append($hdrLine).append(makeDivider());
-		for (let i = 0; i < this.filterList.length; ++i) {
-			$outer.append(makeOuterItem(this, this.filterList[i], this.$miniView));
-			if (i < this.filterList.length - 1) $outer.append(makeDivider());
-		}
+		if (!this.filterList[0].minimalUI) this._$outer.append($hdrLine).append(this._get$divider());
+
+		this.filterList.forEach((f, i) => {
+			// skip rendering any not-yet-used filters
+			if (f instanceof Filter && f.items.length === 0) return;
+
+			this._$outer.append(this._get$outerItem(i, f, this.$miniView));
+			if (i < this.filterList.length - 1) this._$outer.append(this._get$divider());
+		});
+
 		$inputGroup.prepend($filterButton);
 		this.$rendered.push($filterButton);
-		$inputGroup.append($outer);
-		this.$rendered.push($outer);
+		this.$disabledOverlay.append(this._$outer);
+		this.$list.parent().append(this.$disabledOverlay.hide());
+		this.$rendered.push(this._$outer);
 		$inputGroup.after(this.$miniView);
 		this.$rendered.push(this.$miniView);
 
-		addShowHideHandlers(this);
-		if (firstRender) {
-			addResetHandler(this);
-			addSaveHandler(this);
-		}
+		this._doBindShowHideHandlers();
 
-		if (this.dropdownVisible) {
-			$filterButton.find("button").click();
-		}
+		const addResetHandler = () => {
+			if (this.resetButton !== null && this.resetButton !== undefined) {
+				const $btnReset = $(this.resetButton);
+				$btnReset.attr("title", "Reset filters. SHIFT to reset Show/Hide.");
+				this.resetButton.addEventListener("click", (evt) => this.reset(evt.shiftKey));
+			}
+		};
 
-		function getFilterButton () {
-			const $buttonWrapper = $(`<div id="filter-toggle-btn"/>`);
-			$buttonWrapper.addClass(FilterBox.CLS_INPUT_GROUP_BUTTON);
+		if (firstRender) addResetHandler();
 
-			const $filterButton = $(`<button class="btn btn-default dropdown-toggle" data-toggle="dropdown">Filter <span class="caret"></span></button>`);
-			$buttonWrapper.append($filterButton);
-			return $buttonWrapper;
-		}
+		if (this.dropdownVisible) $filterButton.find("button").click();
+		this._doSaveStateDebounced();
+	}
 
-		function getMiniView () {
-			return $(`<div class="mini-view btn-group"/>`);
-		}
+	_getFilterButton () {
+		const $buttonWrapper = $(`<div id="filter-toggle-btn"/>`);
+		$buttonWrapper.addClass(FilterBox.CLS_INPUT_GROUP_BUTTON);
 
-		function makeOuterList () {
-			const $outL = $("<ul/>");
-			$outL.addClass(FilterBox.CLS_DROPDOWN_MENU);
-			$outL.addClass(FilterBox.CLS_DROPDOWN_MENU_FILTER);
-			return $outL;
-		}
+		const $filterButton = $(`<button class="btn btn-default btn-filter">Filter<span/></button>`);
+		$buttonWrapper.append($filterButton);
+		return $buttonWrapper;
+	}
 
-		function makeOuterItem (self, filter, $miniView, namePrefix) {
-			if (filter instanceof MultiFilter) {
-				const $parent = $(`<div/>`);
-				for (const child of filter.filters) {
-					const $ch = makeOuterItem(self, child, $miniView, filter.categoryName);
-					$parent.append($ch);
+	_get$outerItem (idx, filter, $miniView, namePrefix, parent) {
+		if (filter instanceof MultiFilter) {
+			filter.eles = [];
+			const $parent = $(`<div class="wrp-multifilter ${filter.compact ? "wrp-multi-compact" : ""}"/>`);
+
+			const getChildren = () => filter.filters.map(it => this.headers[it.header]);
+
+			const $hdrCompact = $(`<div class="multi-compact-visible-f split">
+						<div>${filter.categoryName} <span class="group-comb-toggle text-muted">(group ${filter.mode.toUpperCase()})</span></div>
+					</div>`).appendTo($parent);
+			const $btnToggleComb = $hdrCompact.find(`.group-comb-toggle`);
+			const setCombineAnd = () => {
+				filter.setModeAnd();
+				$btnToggleComb.text("(group AND)");
+				getChildren().forEach(ch => ch.ele.data("handleUpdateCombiner")(filter.mode));
+			};
+			const setCombineOr = () => {
+				filter.setModeOr();
+				$btnToggleComb.text("(group OR)");
+				getChildren().forEach(ch => ch.ele.data("handleUpdateCombiner")(filter.mode));
+			};
+			$hdrCompact.find(`.group-comb-toggle`).click(() => {
+				if ($btnToggleComb.text() === "(group AND)") setCombineOr();
+				else setCombineAnd();
+			});
+
+			const $wrpButtons = $(`<div/>`).appendTo($hdrCompact);
+			const $groupSummary = $(`<span class="summary" style="margin-right: 5px;">`).appendTo($wrpButtons);
+			const $groupSummaryVal = $(`<span class="filtering" title="Hidden active filters"/>`).appendTo($groupSummary);
+			const updateSummary = () => {
+				const numFiltering = getChildren().filter(it => {
+					return it.ele.data("isFiltering")();
+				}).length;
+				$groupSummaryVal.text(numFiltering);
+				numFiltering ? $groupSummary.show() : $groupSummary.hide();
+			};
+			$(`<button class="btn btn-default btn-xs multi-compact-visible btn-meta" style="border-radius: 3px;">Reset</button>`)
+				.appendTo($wrpButtons)
+				.click(() => {
+					filter.eles.forEach($e => {
+						$e.data("resetValues")();
+						$e.data("resetMeta") && $e.data("resetMeta")();
+					});
+				});
+			const $btnShowHideGroup = $(`<button class="btn btn-default btn-xs show-hide-button multi-compact-visible btn-meta" style="margin-left: 5px;">Hide</button>`)
+				.appendTo($wrpButtons)
+				.click(function () {
+					const $this = $(this);
+					if ($this.text() === "Hide") {
+						filter.eles.forEach($e => $e.data("hideFilter")());
+						$this.text("Show");
+					} else {
+						filter.eles.forEach($e => $e.data("showFilter")());
+						$this.text("Hide");
+					}
+					updateSummary();
+				});
+
+			filter.filters.forEach((child, i) => {
+				const $ch = this._get$outerItem(i, child, $miniView, filter.categoryName, filter);
+				$parent.append($ch);
+			});
+
+			const numHidden = filter.filters.map(it => it.header).filter(it => {
+				if (this._curState.visible) {
+					return this._curState.visible[it] === false
+				} else if (this.storedVisible) {
+					return this.storedVisible[it] === false;
 				}
-				return $parent;
-			} else if (filter instanceof RangeFilter) {
-				// TODO
-			} else if (filter instanceof AllSourcesFilter) {
-				// TODO
-			} else {
-				const $outI = $("<li/>");
-				$outI.addClass("filter-item");
+			}).length;
+			if (numHidden) $btnShowHideGroup.text("Show");
+			updateSummary();
 
-				self.headers[filter.header] = {outer: $outI, filter: filter};
-				const $grid = makePillGrid(filter.header);
-				self.headers[filter.header].ele = $grid;
-				const $innerListHeader = makeHeaderLine($grid);
+			$parent.data(
+				"resetCombiner",
+				function () {
+					filter._originalMode === "or" ? setCombineOr() : setCombineAnd();
+				}
+			);
 
-				$outI.append($innerListHeader);
-				$outI.append($grid);
+			$parent.data(
+				"setCombiner",
+				function (mode) {
+					mode === "or" ? setCombineOr() : setCombineAnd();
+				}
+			);
 
-				return $outI;
+			if (this._curState.groupState) {
+				const state = this._curState.groupState[filter.categoryName];
+				if (state && state.mode) {
+					$parent.data("setCombiner")(state.mode);
+				}
+			} else if (this.storedGroupState) {
+				const state = this.storedGroupState[filter.categoryName];
+				if (state && state.mode) {
+					$parent.data("setCombiner")(state.mode);
+				}
 			}
 
-			function makeHeaderLine ($grid) {
-				const minimalClass = filter.minimalUI ? "filter-minimal" : "";
-				const $line = $(`<div class="h-wrap ${minimalClass}"/>`);
-				const $label = $(`<div>${namePrefix ? `<span class="text-muted">${namePrefix}: </span>` : ""}${filter.header}</div>`);
-				$line.append($label);
+			filter.$ele = $parent;
+			this.multiHeaders[filter.categoryName] = {ele: $parent, filter: filter};
+			return $parent;
+		} else if (filter instanceof RangeFilter) {
+			const $outI = $(`<li class="filter-item"/>`);
 
-				function makeAndOrBtn (defState, tooltip) {
-					const $btn = $(` <button class="btn btn-default btn-xs ${minimalClass}" style="width: 3em;" title="${tooltip}">${defState}</button>`)
-						.data("andor", defState);
-					return $btn
-						.on(EVNT_CLICK, () => {
-							const nxt = $btn.data("andor") === "OR" ? "AND" : "OR";
-							$btn.data("andor", nxt);
-							$btn.text(nxt);
-						});
+			this.headers[filter.header] = {outer: $outI, filter: filter};
+			const $wrpSlider = makeSliderWrapper.bind(this)(filter.header);
+			this.headers[filter.header].ele = $wrpSlider;
+			if (parent) parent.eles.push($wrpSlider);
+
+			const $headerLine = makeSliderHeaderLine.bind(this)(idx, $wrpSlider);
+			this.headers[filter.header].$header = $headerLine;
+
+			$outI.append($headerLine);
+			$outI.append($wrpSlider);
+
+			return $outI;
+		} else if (filter instanceof GroupedFilter || filter instanceof Filter) {
+			const isGrouped = filter instanceof GroupedFilter;
+			const $outI = $(`<li class="filter-item"/>`);
+
+			this.headers[filter.header] = {outer: $outI, filter: filter};
+			const $grid = makePillGrid.bind(this)(isGrouped);
+			this.headers[filter.header].ele = $grid;
+			if (parent) parent.eles.push($grid);
+
+			const $headerLine = makeHeaderLine.bind(this)(idx, $grid);
+			this.headers[filter.header].$header = $headerLine;
+
+			$outI.append($headerLine);
+			$outI.append($grid);
+
+			return $outI;
+		}
+
+		function _addGroupLabel (idx, $line) {
+			$(`
+					<div class="multi-compact-hidden">${namePrefix ? `<span class="text-muted">${namePrefix} <span class="group-comb-toggle">(group ${parent.mode.toUpperCase()})</span>: </span>` : ""}<span>${filter.header}</span></div>
+				`).appendTo($line);
+
+			$line.find(`.group-comb-toggle`).click(function () {
+				const $this = $(this);
+				if ($this.text() === "(group AND)") {
+					parent.$ele.data("setCombiner")("or");
+				} else {
+					parent.$ele.data("setCombiner")("and");
 				}
+			});
+		}
 
-				const $btnAndOrBlue = makeAndOrBtn("OR", "Positive matches mode for this filter. AND requires all blues to match, OR requires at least one blue to match.");
-				self.headers[filter.header].getAndOrBlue = () => {
-					return $btnAndOrBlue.data("andor");
+		function makeHeaderLine (idx, $grid) {
+			const minimalClass = filter.minimalUI ? "filter-minimal" : "";
+			const $line = $(`<div class="h-wrap ${minimalClass} multi-compact-hidden"/>`);
+			_addGroupLabel(idx, $line);
+
+			function makeAndOrBtn (defState, tooltip) {
+				const state = {mode: defState};
+				const $btn = $(`<button class="btn btn-default btn-xs ${minimalClass} btn-meta" style="width: 3em;" title="${tooltip}">${defState}</button>`)
+					.click(() => setState(state.mode === "OR" ? "AND" : "OR"));
+				const setState = (val) => {
+					val = (val || "OR").toUpperCase();
+					state.mode = val;
+					$btn.text(val);
 				};
-				const $btnAndOrRed = makeAndOrBtn("OR", "Negative match mode for this filter. AND requires all reds to match, OR requires at least one red to match.");
-				self.headers[filter.header].getAndOrRed = () => {
-					return $btnAndOrRed.data("andor");
-				};
+				const getState = () => state.mode;
+				return [$btn, setState, getState];
+			}
 
-				const $quickBtns = $(`<span class="btn-group quick-btns" style="margin-left: auto;"/>`);
-				const $all = $(`<button class="btn btn-default btn-xs ${minimalClass}">All</button>`);
-				$quickBtns.append($all);
-				const $clear = $(`<button class="btn btn-default btn-xs ${minimalClass}">Clear</button>`);
-				$quickBtns.append($clear);
-				const $none = $(`<button class="btn btn-default btn-xs ${minimalClass}">None</button>`);
-				$quickBtns.append($none);
-				const $default = $(`<button class="btn btn-default btn-xs ${minimalClass}">Default</button>`);
-				$quickBtns.append($default);
-				$line.append($quickBtns);
+			const [$btnAndOrBlue, setStateBlue, getStateBlue] = makeAndOrBtn("OR", "Positive matches mode for this filter. AND requires all blues to match, OR requires at least one blue to match.");
+			this.headers[filter.header].getAndOrBlue = getStateBlue;
+			this.headers[filter.header].setAndOrBlue = setStateBlue;
 
-				const $logicBtns = $(`<span class="btn-group andor-btns"></span>`);
-				$logicBtns.append($btnAndOrBlue).append($btnAndOrRed);
-				$line.append(`<div style="display: inline-block; width: 5px;">`).append($logicBtns);
+			const [$btnAndOrRed, setStateRed, getStateRed] = makeAndOrBtn("OR", "Negative match mode for this filter. AND requires all reds to match, OR requires at least one red to match.");
+			this.headers[filter.header].getAndOrRed = getStateRed;
+			this.headers[filter.header].setAndOrRed = setStateRed;
 
-				const $summary = $(`<span class="summary" style="margin-left: auto;"/>`);
-				const $summaryInclude = $(`<span class="include" title="Hiding includes"/>`);
-				const $summarySpacer = $(`<span class="spacer"/>`);
-				const $summaryExclude = $(`<span class="exclude" title="Hidden excludes"/>`);
-				$summary.append($summaryInclude);
-				$summary.append($summarySpacer);
-				$summary.append($summaryExclude);
+			// set AND/OR state
+			// If re-render, use previous values. Otherwise, if there's stored values, stored values. Otherwise, do nothing (use the default OR/OR)
+			if (this._curState.values && this._curState.values[filter.header]) {
+				const andOr = this._curState.values[filter.header]._andOr || {blue: "OR", red: "OR"};
+				setStateBlue(andOr.blue);
+				setStateRed(andOr.red);
+			} else if (this.storedValues && this.storedValues[filter.header] && this.storedValues[filter.header]._andOr !== undefined) {
+				const andOr = this.storedValues[filter.header]._andOr || {blue: "OR", red: "OR"};
+				setStateBlue(andOr.blue);
+				setStateRed(andOr.red);
+			}
+
+			$grid.data("resetMeta", () => {
+				setStateBlue("OR");
+				setStateRed("OR");
+			});
+
+			const $quickBtns = $(`<span class="btn-group quick-btns" style="margin-left: auto;"/>`).appendTo($line);
+			const $all = $(`<button class="btn btn-default btn-xs btn-meta ${minimalClass}">All</button>`).appendTo($quickBtns);
+			const $clear = $(`<button class="btn btn-default btn-xs btn-meta ${minimalClass}">Clear</button>`).appendTo($quickBtns);
+			const $none = $(`<button class="btn btn-default btn-xs btn-meta ${minimalClass}">None</button>`).appendTo($quickBtns);
+			const $default = $(`<button class="btn btn-default btn-xs btn-meta ${minimalClass}">Default</button>`).appendTo($quickBtns);
+
+			const $summary = $(`<span class="summary"/>`).appendTo($line);
+			const $summaryInclude = $(`<span class="filter__summary_item filter__summary_item--include" title="Hidden includes"/>`).appendTo($summary);
+			const $summarySpacer = $(`<span class="filter__summary_item_spacer"/>`).appendTo($summary);
+			const $summaryExclude = $(`<span class="filter__summary_item filter__summary_item--exclude" title="Hidden excludes"/>`).appendTo($summary);
+			$summary.hide();
+
+			const $logicBtns = $(`<span class="btn-group andor-btns" style="margin-left: 5px;"/>`).append($btnAndOrBlue).append($btnAndOrRed).appendTo($line);
+
+			const $showHide = $(`<button class="btn btn-default btn-xs btn-meta show-hide-button ${minimalClass}" style="margin-left: 5px;">Hide</button>`).appendTo($line);
+
+			// FIXME this bugs out in some unknown cases
+			const doShow = () => {
+				$showHide.text("Hide");
+				$grid.show();
+				$quickBtns.show();
+				$logicBtns.css("margin-left", "5px");
 				$summary.hide();
-				$line.append($summary);
-
-				const $showHide = $(`<button class="btn btn-default btn-xs show-hide-button ${minimalClass}" style="margin-left: 12px;">Hide</button>`);
-				$line.append($showHide);
-
-				$showHide.on(EVNT_CLICK, function () {
-					if ($grid.is(":hidden")) {
-						$showHide.text("Hide");
-						$grid.show();
-						$quickBtns.show();
-						$summary.hide();
-						$showHide.css("margin-left", "12px");
+			};
+			const doHide = () => {
+				$showHide.text("Show");
+				$grid.hide();
+				$quickBtns.hide();
+				updateSummary();
+			};
+			const updateSummary = () => {
+				const counts = $grid.data("getCounts")();
+				if (counts.yes > 0 || counts.no > 0) {
+					if (counts.yes > 0) {
+						$summaryInclude.prop("title", `${counts.yes} hidden 'required' tag${counts.yes > 1 ? "s" : ""}`);
+						$summaryInclude.text(counts.yes);
+						$summaryInclude.show();
 					} else {
-						$showHide.text("Show");
-						$grid.hide();
-						$quickBtns.hide();
-						const counts = $grid.data("getCounts")();
-						if (counts.yes > 0 || counts.no > 0) {
-							if (counts.yes > 0) {
-								$summaryInclude.prop("title", `${counts.yes} hidden 'required' tag${counts.yes > 1 ? "s" : ""}`);
-								$summaryInclude.text(counts.yes);
-								$summaryInclude.show();
-							} else {
-								$summaryInclude.hide();
-							}
-							if (counts.yes > 0 && counts.no > 0) {
-								$summarySpacer.show();
-							} else {
-								$summarySpacer.hide();
-							}
-							if (counts.no > 0) {
-								$summaryExclude.prop("title", `${counts.no} hidden 'excluded' tag${counts.no > 1 ? "s" : ""}`);
-								$summaryExclude.text(counts.no);
-								$summaryExclude.show();
-							} else {
-								$summaryExclude.hide();
-							}
-							$showHide.css("margin-left", "12px");
-							$summary.show();
-						} else {
-							$showHide.css("margin-left", "auto");
-						}
+						$summaryInclude.hide();
+					}
+					if (counts.yes > 0 && counts.no > 0) {
+						$summarySpacer.show();
+					} else {
+						$summarySpacer.hide();
+					}
+					if (counts.no > 0) {
+						$summaryExclude.prop("title", `${counts.no} hidden 'excluded' tag${counts.no > 1 ? "s" : ""}`);
+						$summaryExclude.text(counts.no);
+						$summaryExclude.show();
+					} else {
+						$summaryExclude.hide();
+					}
+					$logicBtns.css("margin-left", "5px");
+					$summary.show();
+				} else {
+					$logicBtns.css("margin-left", "auto");
+					$summary.hide();
+				}
+			};
+			$grid.data("showFilter", doShow);
+			$grid.data("hideFilter", doHide);
+			$grid.data("updateSummary", updateSummary);
+
+			if (this._curState.visible && this._curState.visible[filter.header] === false) doHide();
+			else if (this.storedVisible && this.storedVisible[filter.header] === false) doHide();
+
+			$showHide.click(function () {
+				if ($grid.is(":hidden")) {
+					doShow();
+				} else {
+					doHide();
+				}
+			});
+
+			$none.click(function () {
+				$grid.find(".filter-pill").each(function () {
+					$(this).data("setter")(FilterBox._PILL_STATES[2]);
+				});
+				if ($grid.data("doUpdateNestSummary")) $grid.data("doUpdateNestSummary")();
+			});
+
+			$all.click(function () {
+				$grid.find(".filter-pill").each(function () {
+					$(this).data("setter")(FilterBox._PILL_STATES[1]);
+				});
+				if ($grid.data("doUpdateNestSummary")) $grid.data("doUpdateNestSummary")();
+			});
+
+			$clear.click(function () {
+				$grid.find(".filter-pill").each(function () {
+					$(this).data("setter")(FilterBox._PILL_STATES[0]);
+				});
+				if ($grid.data("doUpdateNestSummary")) $grid.data("doUpdateNestSummary")();
+			});
+
+			$default.click(() => {
+				this._reset(filter.header);
+				if ($grid.data("doUpdateNestSummary")) $grid.data("doUpdateNestSummary")();
+			});
+
+			return $line;
+		}
+
+		function makePillGrid (isGrouped) {
+			const $pills = [];
+			const $grid = $(`<div class="pill-grid"/>`);
+			const $subGrids = [];
+			const $subGridDividers = [];
+			let gridIndex = 0;
+
+			function addDivider () {
+				const $hr = $(`<hr class="pill-grid-subs-divider">`).appendTo($grid);
+				$subGridDividers.push($hr);
+			}
+
+			function addGroup (bump) {
+				if (bump) {
+					filter.numGroups++;
+					addDivider();
+				}
+				$subGrids[gridIndex] = $(`<div class="pill-grid-sub"/>`).appendTo($grid);
+				if (gridIndex + 1 < filter.numGroups) addDivider();
+				if (bump) gridIndex++;
+			}
+
+			function cycleState ($pill, $miniPill, forward) {
+				const curIndex = FilterBox._PILL_STATES.indexOf($pill.attr("state"));
+
+				let newIndex = forward ? curIndex + 1 : curIndex - 1;
+				if (newIndex >= FilterBox._PILL_STATES.length) newIndex = 0;
+				else if (newIndex < 0) newIndex = FilterBox._PILL_STATES.length - 1;
+				$pill.attr("state", FilterBox._PILL_STATES[newIndex]);
+				$miniPill.attr("state", FilterBox._PILL_STATES[newIndex]);
+			}
+
+			const nests = {};
+			const nested = filter.items.filter(it => it instanceof FilterItem && it.nest).map(it => ({nest: it.nest, nestHidden: !!it.nestHidden})).sort((a, b) => SortUtil.ascSortLower(a.nest, b.nest));
+			let updateNestStats = null;
+			if (nested.length) {
+				const $subGrid = $(`<div class="pill-grid-sub"/>`).appendTo($grid);
+				nested.forEach(nestObj => {
+					const nest = nestObj.nest
+					if (!nests[nest]) {
+						const $nest = $(`<div class="filter__btn_nest">${nest} [${nestObj.nestHidden ? "\u2212" : "+"}]</div>`).click(() => {
+							$nest.html($nest.html().replace(/\[[\u2212+]]$/, (it) => it === "[+]" ? "[\u2212]" : "[+]"))
+							const myNest = nests[nest];
+							myNest.$children.forEach($e => $e.toggle());
+							$subGrids.forEach(($sg, i) => {
+								$subGridDividers[i].toggle(!!$sg.find(`.filter-pill:visible`).length);
+							});
+							updateNestStats();
+						}).appendTo($grid);
+
+						nests[nest] = {
+							_key: nest,
+							$nest,
+							$children: [],
+							nestHidden: nestObj.nestHidden
+						};
+
+						$subGrid.append($nest);
 					}
 				});
 
-				$none.on(EVNT_CLICK, function () {
-					$grid.find(".filter-pill").each(function () {
-						$(this).data("setter")(FilterBox._PILL_STATES[2]);
+				const $nestStats = $(`<div class="filter__summary_nest"/>`).appendTo($subGrid);
+
+				updateNestStats = () => {
+					let hiddenHigh = 0;
+					let hiddenLow = 0;
+					Object.keys(nests).forEach(k => {
+						const nest = nests[k];
+						const nestStats = {high: 0, low: 0, total: 0};
+
+						nest.$children.forEach($c => {
+							const state = $c.attr("state");
+							nestStats.total++;
+
+							if (state === FilterBox._PILL_STATES[1]) {
+								if ($c.is(":hidden")) {
+									hiddenHigh++;
+									nestStats.high++;
+								}
+							} else if (state === FilterBox._PILL_STATES[2]) {
+								if ($c.is(":hidden")) {
+									hiddenLow++;
+									nestStats.low++;
+								}
+							}
+						});
+
+						const allHigh = nestStats.total === nestStats.high;
+						const allLow = nestStats.total === nestStats.low
+						nest.$nest.toggleClass("filter__btn_nest--include-all", allHigh)
+							.toggleClass("filter__btn_nest--exclude-all", allLow)
+							.toggleClass("filter__btn_nest--include", !!(!allHigh && !allLow && nestStats.high && !nestStats.low))
+							.toggleClass("filter__btn_nest--exclude", !!(!allHigh && !allLow && !nestStats.high && nestStats.low))
+							.toggleClass("filter__btn_nest--both", !!(!allHigh && !allLow && nestStats.high && nestStats.low));
 					});
-				});
 
-				$all.on(EVNT_CLICK, function () {
-					$grid.find(".filter-pill").each(function () {
-						$(this).data("setter")(FilterBox._PILL_STATES[1]);
+					$nestStats.html(`
+							${hiddenHigh ? `<span class="filter__summary_item filter__summary_item--include" title="${hiddenHigh} hidden 'required' tag${hiddenHigh === 1 ? "" : "s"}">${hiddenHigh}</span>` : ""}
+							${hiddenHigh && hiddenLow ? `<span class="filter__summary_item_spacer"></span>` : ""}
+							${hiddenLow ? `<span class="filter__summary_item filter__summary_item--exclude" title="${hiddenLow} hidden 'excluded' tag${hiddenHigh === 1 ? "" : "s"}">${hiddenLow}</span>` : ""}
+						`);
+				};
+
+				$grid.data("doUpdateNestSummary", updateNestStats);
+
+				addDivider();
+				this.headers[filter.header].getNestVisibility = () => {
+					const outObj = {};
+					Object.values(nests).forEach(nObj => {
+						const hidden = nObj.$nest.text().includes("[+]");
+						outObj[nObj._key] = hidden;
 					});
-				});
-
-				$clear.on(EVNT_CLICK, function () {
-					$grid.find(".filter-pill").each(function () {
-						$(this).data("setter")(FilterBox._PILL_STATES[0]);
-					});
-				});
-
-				$default.on(EVNT_CLICK, function () {
-					self._reset(filter.header);
-				});
-
-				return $line;
+					return outObj;
+				};
 			}
 
-			function makePillGrid () {
-				const $pills = [];
-				const $grid = $(`<div class="pill-grid"/>`);
+			if (isGrouped) {
+				$grid.addClass(`pill-grid-subs`);
+				for (; gridIndex < filter.numGroups; ++gridIndex) addGroup();
+			}
 
-				function cycleState ($pill, $miniPill, forward) {
-					const curIndex = FilterBox._PILL_STATES.indexOf($pill.attr("state"));
+			for (const item of filter.items) {
+				const iText = item instanceof FilterItem ? item.item : item;
+				const iChangeFn = item instanceof FilterItem ? item.changeFn : null;
+				const display = filter.displayFn ? filter.displayFn(item) : iText;
 
-					let newIndex = forward ? curIndex + 1 : curIndex - 1;
-					if (newIndex >= FilterBox._PILL_STATES.length) newIndex = 0;
-					else if (newIndex < 0) newIndex = FilterBox._PILL_STATES.length - 1;
-					$pill.attr("state", FilterBox._PILL_STATES[newIndex]);
-					$miniPill.attr("state", FilterBox._PILL_STATES[newIndex]);
-				}
+				const $pill = $(`<div class="filter-pill">${display}</div>`).data("value", iText).attr("state", FilterBox._PILL_STATES[0]);
+				const $miniPill = $(`<div class="mini-pill">${display}</div>`).attr("state", FilterBox._PILL_STATES[0]);
 
-				for (const item of filter.items) {
-					const iText = item instanceof FilterItem ? item.item : item;
-					const iChangeFn = item instanceof FilterItem ? item.changeFn : null;
-
-					const $pill = $(`<div class="filter-pill"/>`);
-					const $miniPill = $(`<div class="mini-pill"/>`);
-
-					const display = filter.displayFn ? filter.displayFn(iText) : iText;
-
-					$pill.val(iText);
-					$pill.html(display);
-					$miniPill.html(display);
-
+				$miniPill.click(() => {
 					$pill.attr("state", FilterBox._PILL_STATES[0]);
 					$miniPill.attr("state", FilterBox._PILL_STATES[0]);
-
-					$miniPill.on(EVNT_CLICK, function () {
-						$pill.attr("state", FilterBox._PILL_STATES[0]);
-						$miniPill.attr("state", FilterBox._PILL_STATES[0]);
-						handlePillChange(iText, iChangeFn, FilterBox._PILL_STATES[0]);
-						self._fireValChangeEvent();
-					});
-
-					$pill.on(EVNT_CLICK, function () {
-						cycleState($pill, $miniPill, true);
-						handlePillChange(iText, iChangeFn, $pill.attr("state"));
-					});
-
-					$pill.on("contextmenu", function (e) {
-						e.preventDefault();
-						cycleState($pill, $miniPill, false);
-						handlePillChange(iText, iChangeFn, $pill.attr("state"));
-					});
-
-					// bind getters and resetters
-					$pill.data(
-						"setter",
-						function (toVal) {
-							_setter($pill, $miniPill, toVal, iText, iChangeFn, false);
-						}
-					);
-					$pill.data("resetter",
-						function () {
-							_resetter($pill, $miniPill, iText, iChangeFn, false);
-						}
-					);
-
-					// If re-render, use previous values. Otherwise, if there's stored values, stored values. Otherwise, default the pills
-					if (curValues) {
-						let valNum = curValues[filter.header][iText];
-						if (valNum < 0) valNum = 2;
-						_setter($pill, $miniPill, FilterBox._PILL_STATES[valNum], iText, iChangeFn, true);
-					} else if (self.storedValues && self.storedValues[filter.header] && self.storedValues[filter.header][iText] !== undefined) {
-						let valNum = self.storedValues[filter.header][iText];
-						if (valNum < 0) valNum = 2;
-						_setter($pill, $miniPill, FilterBox._PILL_STATES[valNum], iText, iChangeFn, true);
-					} else {
-						_resetter($pill, $miniPill, iText, iChangeFn, true);
-					}
-
-					// add a class to mark any items that are default deselected (used to add visual difference)
-					tagDefaults($miniPill, iText);
-
-					$grid.append($pill);
-					$miniView.append($miniPill);
-					$pills.push($pill);
-				}
-
-				function tagDefaults ($miniPill, iText) {
-					if (filter.deselFn && filter.deselFn(iText)) {
-						$miniPill.addClass("default-desel");
-					} else if (filter.selFn && filter.selFn(iText)) {
-						$miniPill.addClass("default-sel");
-					}
-				}
-
-				// allows silent (pill change function not triggered) sets
-				function _setter ($pill, $miniPill, toVal, iText, iChangeFn, silent) {
-					$pill.attr("state", toVal);
-					$miniPill.attr("state", toVal);
-					if (!silent) {
-						handlePillChange(iText, iChangeFn, toVal);
-					}
-				}
-
-				// allows silent (pill change function not triggered) resets
-				function _resetter ($pill, $miniPill, iText, iChangeFn, silent) {
-					if (filter.deselFn && filter.deselFn(iText)) {
-						$pill.attr("state", "no");
-						$miniPill.attr("state", "no");
-					} else if (filter.selFn && filter.selFn(iText)) {
-						$pill.attr("state", "yes");
-						$miniPill.attr("state", "yes");
-					} else {
-						$pill.attr("state", "ignore");
-						$miniPill.attr("state", "ignore");
-					}
-					if (!silent) {
-						handlePillChange(iText, iChangeFn, $pill.attr("state"));
-					}
-				}
-
-				function handlePillChange (iText, iChangeFn, val) {
-					if (iChangeFn) {
-						iChangeFn(iText, val);
-					}
-				}
-
-				$grid.data(
-					"getValues",
-					function () {
-						const out = {};
-						const _totals = {yes: 0, no: 0, ignored: 0};
-						$pills.forEach(function (p) {
-							const state = p.attr("state");
-							out[p.val()] = state === "yes" ? 1 : state === "no" ? -1 : 0;
-							const countName = state === "yes" ? "yes" : state === "no" ? "no" : "ignored";
-							_totals[countName] = _totals[countName] + 1;
-						});
-						out._totals = _totals;
-						out._andOr = {
-							blue: self.headers[filter.header].getAndOrBlue(),
-							red: self.headers[filter.header].getAndOrRed()
-						};
-						return out;
-					}
-				);
-
-				$grid.data(
-					"setValues",
-					function (toVal) {
-						const toNo = toVal.filter(it => it[0] === "!").map(it => it.slice(1));
-						const toYes = toVal.filter(it => it[0] !== "!");
-						$pills.forEach((p) => {
-							if (toYes.includes(p.val().toLowerCase())) {
-								$(p).data("setter")(FilterBox._PILL_STATES[1])
-							} else if (toNo.includes(p.val().toLowerCase())) {
-								$(p).data("setter")(FilterBox._PILL_STATES[2])
-							} else {
-								$(p).data("setter")(FilterBox._PILL_STATES[0])
-							}
-						});
-					}
-				);
-
-				$grid.data(
-					"getCounts",
-					function () {
-						const out = {"yes": 0, "no": 0};
-						$pills.forEach(function (p) {
-							const state = p.attr("state");
-							if (out[state] !== undefined) out[state] = out[state] + 1;
-						});
-						return out;
-					}
-				);
-
-				return $grid;
-			}
-		}
-
-		function makeDivider () {
-			return $(`<div class="pill-grid-divider"/>`);
-		}
-
-		function addShowHideHandlers (self) {
-			// watch for the button changing to "open"
-			const $filterToggleButton = $("#filter-toggle-btn");
-			const observer = new MutationObserver(function (mutations) {
-				mutations.forEach(function (mutationRecord) {
-					if (!$filterToggleButton.hasClass("open")) {
-						self.$disabledOverlay.detach();
-						self.dropdownVisible = false;
-						$outer.hide();
-						// fire an event when the form is closed
-						self._fireValChangeEvent();
-					} else {
-						self.$list.parent().append(self.$disabledOverlay);
-						$outer.show();
-						self.dropdownVisible = true;
-					}
+					handlePillChange(iText, iChangeFn, FilterBox._PILL_STATES[0]);
+					$grid.data("updateSummary")();
+					this._fireValChangeEvent();
 				});
-			});
-			observer.observe($filterToggleButton[0], {attributes: true, attributeFilter: ["class"]});
 
-			// squash events from the menu, otherwise the dropdown gets hidden when we click inside it
-			$outer.on(EVNT_CLICK, function (e) {
-				e.stopPropagation();
-			});
-		}
+				$pill.click(function () {
+					cycleState($pill, $miniPill, true);
+					handlePillChange(iText, iChangeFn, $pill.attr("state"));
+				});
 
-		function addResetHandler (self) {
-			if (self.resetButton !== null && self.resetButton !== undefined) {
-				self.resetButton.addEventListener(EVNT_CLICK, function () {
-					self.reset();
-				}, false);
+				$pill.on("contextmenu", function (e) {
+					if (e.ctrlKey) return true;
+					e.preventDefault();
+					cycleState($pill, $miniPill, false);
+					handlePillChange(iText, iChangeFn, $pill.attr("state"));
+				});
+
+				// bind getters and resetters
+				$pill.data(
+					"setter",
+					function (toVal) {
+						_setter($pill, $miniPill, toVal, iText, iChangeFn, false);
+					}
+				);
+				$pill.data("resetter",
+					function () {
+						_resetter($pill, $miniPill, iText, iChangeFn, false);
+					}
+				);
+
+				// set pill state
+				// If re-render, use previous values. Otherwise, if there's stored values, stored values. Otherwise, default the pills
+				if (this._curState.values && this._curState.values[filter.header]) {
+					let valNum = this._curState.values[filter.header][iText];
+					if (valNum < 0) valNum = 2;
+					_setter($pill, $miniPill, FilterBox._PILL_STATES[valNum], iText, iChangeFn, true);
+				} else if (this.storedValues && this.storedValues[filter.header] && this.storedValues[filter.header][iText] !== undefined) {
+					let valNum = this.storedValues[filter.header][iText];
+					if (valNum < 0) valNum = 2;
+					_setter($pill, $miniPill, FilterBox._PILL_STATES[valNum], iText, iChangeFn, true);
+				} else {
+					_resetter($pill, $miniPill, iText, iChangeFn, true);
+				}
+
+				// add a class to mark any items that are default deselected (used to add visual difference)
+				tagDefaults($miniPill, iText);
+
+				const nest = item instanceof FilterItem ? item.nest : null;
+				const handleNest = () => {
+					if (nest) nests[nest].$children.push($pill);
+				};
+
+				if (isGrouped) {
+					const group = Number(item instanceof FilterItem && item.group != null ? item.group : filter.groupFn(iText));
+					while (group > $subGrids.length - 1) addGroup(true);
+					handleNest();
+					$subGrids[group].append($pill)
+				} else {
+					handleNest();
+					$grid.append($pill);
+				}
+
+				$miniView.append($miniPill);
+				$pills.push($pill);
 			}
+
+			Object.values(nests).forEach(nest => {
+				if (this._curState.nestState) {
+					const isHidden = MiscUtil.getProperty(this._curState.nestState, filter.header, nest._key);
+					if (isHidden) nest.$nest.trigger("click");
+				} else if (this.storedNestState) {
+					const isHidden = MiscUtil.getProperty(this.storedNestState, filter.header, nest._key);
+					if (isHidden) nest.$nest.trigger("click");
+				} else if (nest.nestHidden) nest.$nest.trigger("click");
+			});
+
+			function tagDefaults ($miniPill, iText) {
+				if (filter.deselFn && filter.deselFn(iText)) {
+					$miniPill.addClass("default-desel");
+				} else if (filter.selFn && filter.selFn(iText)) {
+					$miniPill.addClass("default-sel");
+				}
+			}
+
+			// allows silent (pill change function not triggered) sets
+			function _setter ($pill, $miniPill, toVal, iText, iChangeFn, silent) {
+				$pill.attr("state", toVal);
+				$miniPill.attr("state", toVal);
+				if (!silent) {
+					handlePillChange(iText, iChangeFn, toVal);
+				}
+			}
+
+			// allows silent (pill change function not triggered) resets
+			function _resetter ($pill, $miniPill, iText, iChangeFn, silent) {
+				if (filter.deselFn && filter.deselFn(iText)) {
+					$pill.attr("state", "no");
+					$miniPill.attr("state", "no");
+				} else if (filter.selFn && filter.selFn(iText)) {
+					$pill.attr("state", "yes");
+					$miniPill.attr("state", "yes");
+				} else {
+					$pill.attr("state", "ignore");
+					$miniPill.attr("state", "ignore");
+				}
+				if (!silent) {
+					handlePillChange(iText, iChangeFn, $pill.attr("state"));
+				}
+			}
+
+			function handlePillChange (iText, iChangeFn, val) {
+				if (iChangeFn) {
+					iChangeFn(iText, val);
+				}
+			}
+
+			$grid.data(
+				"getValues",
+				() => {
+					const out = {};
+					const _totals = {yes: 0, no: 0, ignored: 0};
+					$pills.forEach(function (p) {
+						const state = p.attr("state");
+						out[p.data("value")] = state === "yes" ? 1 : state === "no" ? -1 : 0;
+						const countName = state === "yes" ? "yes" : state === "no" ? "no" : "ignored";
+						_totals[countName] = _totals[countName] + 1;
+					});
+					out._totals = _totals;
+					out._andOr = {
+						blue: this.headers[filter.header].getAndOrBlue(),
+						red: this.headers[filter.header].getAndOrRed()
+					};
+					return out;
+				}
+			);
+
+			$grid.data("isVisible", () => $grid.css("display") !== "none");
+
+			$grid.data(
+				"isFiltering",
+				function () {
+					const counts = $grid.data("getCounts")();
+					return counts.yes || counts.no;
+				}
+			);
+
+			$grid.data(
+				"handleUpdateCombiner",
+				(mode) => {
+					if (parent) {
+						this.headers[filter.header].$header.find(`.group-comb-toggle`).each((i, e) => {
+							$(e).text(`(group ${mode.toUpperCase()})`);
+						});
+					}
+				}
+			);
+
+			$grid.data(
+				"setValues",
+				function (toVal) {
+					const toNo = toVal.filter(it => it[0] === "!").map(it => it.slice(1));
+					const toYes = toVal.filter(it => it[0] !== "!");
+					$pills.forEach((p) => {
+						if (toYes.includes(String(p.data("value")).toLowerCase())) {
+							$(p).data("setter")(FilterBox._PILL_STATES[1])
+						} else if (toNo.includes(String(p.data("value")).toLowerCase())) {
+							$(p).data("setter")(FilterBox._PILL_STATES[2])
+						} else {
+							$(p).data("setter")(FilterBox._PILL_STATES[0])
+						}
+					});
+					if ($grid.data("doUpdateNestSummary")) $grid.data("doUpdateNestSummary")();
+				}
+			);
+
+			$grid.data(
+				"getCounts",
+				function () {
+					const out = {"yes": 0, "no": 0};
+					$pills.forEach(function (p) {
+						const state = p.attr("state");
+						if (out[state] !== undefined) out[state] = out[state] + 1;
+					});
+					return out;
+				}
+			);
+
+			$grid.data(
+				"resetValues",
+				function () {
+					$pills.forEach(function (p) {
+						p.data("resetter")();
+					});
+					if ($grid.data("doUpdateNestSummary")) $grid.data("doUpdateNestSummary")();
+				}
+			);
+
+			return $grid;
 		}
 
-		function addSaveHandler (self) {
-			window.addEventListener("beforeunload", function () {
-				const state = self.getValues();
-				StorageUtil.setForPage(FilterBox._STORAGE_NAME, state);
+		function makeSliderHeaderLine (idx, $wrpSlide) {
+			const $line = $(`<div class="h-wrap multi-compact-hidden"/>`);
+			_addGroupLabel(idx, $line);
+
+			const $quickBtns = $(`<span class="btn-group quick-btns" style="margin-left: auto;"/>`).appendTo($line);
+			$(`<button class="btn btn-default btn-xs multi-compact-hidden btn-meta" style="border-radius: 3px;">Reset</button>`)
+				.appendTo($quickBtns)
+				.click(() => {
+					$wrpSlide.data("resetValues")();
+				});
+
+			const $summary = $(`<span class="summary" style="margin-left: auto;"/>`).appendTo($line);
+			const $summaryRange = $(`<span class="filter__summary_item filter__summary_item--include multi-compact-hidden" title="Selected range"/>`).appendTo($summary);
+			$summary.hide();
+
+			const $showHide = $(`<button class="btn btn-default btn-xs show-hide-button multi-compact-hidden btn-meta" style="margin-left: 5px;">Hide</button>`).appendTo($line);
+
+			const doHide = () => {
+				$showHide.text("Show");
+				$wrpSlide.hide();
+				$quickBtns.hide();
+				updateSummary();
+				$summary.show();
+			};
+			const doShow = () => {
+				$showHide.text("Hide");
+				$wrpSlide.show();
+				$quickBtns.show();
+				$summary.hide();
+			};
+			const updateSummary = () => {
+				const vals = $wrpSlide.data("getValues")();
+				const dispMax = () => filter.labels ? filter.items[vals.max] : vals.max;
+				const dispMin = () => filter.labels ? filter.items[vals.min] : vals.min;
+				$summaryRange.text(vals.min === filter.min && vals.max === filter.max ? "" : vals.min === filter.min ? `≤ ${dispMax()}` : vals.max === filter.max ? `≥ ${dispMin()}` : `${dispMin()}-${dispMax()}`);
+			};
+			$wrpSlide.data("showFilter", doShow);
+			$wrpSlide.data("hideFilter", doHide);
+			$wrpSlide.data("updateSummary", updateSummary);
+
+			if (this._curState.visible && this._curState.visible[filter.header] === false) doHide();
+			else if (this.storedVisible && this.storedVisible[filter.header] === false) doHide();
+
+			$showHide.click(function () {
+				if ($wrpSlide.is(":hidden")) doShow();
+				else doHide();
 			});
+
+			return $line;
 		}
+
+		function makeSliderWrapper () {
+			const $wrp = $(`<div class="pill-grid pill-grid--flex"/>`);
+
+			const $lblInline = $(`<div class="multi-compact-visible range-inline-label">${filter.header}</div>`).appendTo($wrp);
+			const $sld = $(`<div class="filter-slider"/>`).appendTo($wrp);
+			const subSliderOpts = {};
+			if (filter.labels) {
+				subSliderOpts.labels = filter.items
+			} else if (filter.allowGreater) {
+				subSliderOpts.labels = {
+					last: `${filter.max}+`
+				}
+			}
+			if (filter.suffix) {
+				subSliderOpts.suffix = filter.suffix;
+			}
+			$sld.slider({
+				min: filter.min,
+				max: filter.max,
+				range: true,
+				values: [filter.min, filter.max]
+			}).slider("pips", subSliderOpts).slider("float", subSliderOpts);
+			filter.$slider = $sld;
+
+			const $miniPillMin = $(`<div class="mini-pill" state="ignore"/>`);
+			const $miniPillMax = $(`<div class="mini-pill" state="ignore"/>`);
+
+			function checkUpdateMiniPills () {
+				const [min, max] = $sld.slider("values");
+
+				if (min === max && filter.min !== filter.max) {
+					$miniPillMin.attr("state", FilterBox._PILL_STATES[1]).text(`${filter.header} = ${filter.labels ? filter.items[min] : min}`);
+					$miniPillMax.attr("state", FilterBox._PILL_STATES[0]);
+				} else {
+					if (min > filter.min) $miniPillMin.attr("state", FilterBox._PILL_STATES[1]).text(`${filter.header} ≥ ${filter.labels ? filter.items[min] : min}`);
+					else $miniPillMin.attr("state", FilterBox._PILL_STATES[0]);
+
+					if (max < filter.max) $miniPillMax.attr("state", FilterBox._PILL_STATES[1]).text(`${filter.header} ≤ ${filter.labels ? filter.items[max] : max}`);
+					else $miniPillMax.attr("state", FilterBox._PILL_STATES[0]);
+				}
+			}
+
+			$sld.slider().on("slidechange", checkUpdateMiniPills);
+
+			$miniPillMin.click(() => {
+				$miniPillMin.attr("state", FilterBox._PILL_STATES[0]);
+				const [min, max] = $sld.slider("values");
+				$sld.slider("values", [filter.min, max]);
+				$wrp.data("updateSummary")();
+				this._fireValChangeEvent();
+			}).appendTo($miniView);
+			$miniPillMax.click(() => {
+				$miniPillMax.attr("state", FilterBox._PILL_STATES[0]);
+				const [min, max] = $sld.slider("values");
+				$sld.slider("values", [min, filter.max]);
+				this._fireValChangeEvent();
+			}).appendTo($miniView);
+
+			$wrp.data(
+				"resetValues",
+				function () {
+					$sld.slider("values", [filter.min, filter.max]);
+					checkUpdateMiniPills();
+				}
+			);
+
+			$wrp.data(
+				"getValues",
+				function () {
+					const out = {};
+					const [min, max] = $sld.slider("values");
+					out.min = min;
+					out.max = max;
+					out.isMinVal = min === filter.min;
+					out.isMaxVal = max === filter.max;
+					return out;
+				}
+			);
+
+			$wrp.data(
+				"isVisible",
+				function () {
+					return $wrp.css("display") !== "none";
+				}
+			);
+
+			$wrp.data(
+				"isFiltering",
+				function () {
+					const values = $wrp.data("getValues")();
+					return values.min !== filter.min || values.max !== filter.max;
+				}
+			);
+
+			$wrp.data(
+				"handleUpdateCombiner",
+				(mode) => {
+					if (parent) {
+						this.headers[filter.header].$header.find(`.group-comb-toggle`).each((i, e) => {
+							$(e).text(`(group ${mode.toUpperCase()})`);
+						});
+					}
+				}
+			);
+
+			$wrp.data(
+				"setValues",
+				function (toVal) {
+					// labelled values generally come from @filter tags
+					if (filter.labels && !(toVal.some(it => it.startsWith(`min@`) || it.startsWith(`max@`)))) {
+						const idxs = toVal.map(it => {
+							const idx = filter.items.indexOf(it);
+							return ~idx ? idx : 0;
+						});
+						const min = Math.min(...idxs);
+						const max = Math.max(...idxs);
+						$sld.slider("values", [min, max]);
+					} else {
+						const min = toVal.filter(it => it.startsWith("min@")).map(it => it.slice(4));
+						const max = toVal.filter(it => it.startsWith("max@")).map(it => it.slice(4));
+						$sld.slider(
+							"values",
+							[
+								min.length ? Math.max(min[0], filter.min) : filter.min,
+								max.length ? Math.min(max[0], filter.max) : filter.max
+							]
+						);
+					}
+					checkUpdateMiniPills();
+				}
+			);
+
+			// If re-render, use previous values. Otherwise, if there's stored values, stored values. Otherwise, default the pills
+			if (this._curState.values) {
+				const min = this._curState.values[filter.header].min;
+				const max = this._curState.values[filter.header].max;
+				$sld.slider("values", [min, max]);
+				checkUpdateMiniPills();
+			} else if (this.storedValues && this.storedValues[filter.header]) {
+				const stored = this.storedValues[filter.header];
+				const min = stored.isMinVal ? filter.min : stored.min || filter.min;
+				const max = stored.isMaxVal ? filter.max : stored.max || filter.max;
+				$sld.slider("values", [min, max]);
+				checkUpdateMiniPills();
+			} else {
+				$wrp.data("resetValues")();
+			}
+
+			return $wrp;
+		}
+	}
+
+	_get$divider () {
+		return $(`<div class="pill-grid-divider"/>`);
+	}
+
+	_doOpen () {
+		$(`body`).css("overflow", "hidden");
+		this.$disabledOverlay.show();
+		this._$outer.show();
+		this.dropdownVisible = true;
+	}
+
+	_doClose () {
+		$(`body`).css("overflow", "");
+		this.$disabledOverlay.hide();
+		this.dropdownVisible = false;
+		this._$outer.hide();
+		// fire an event when the form is closed
+		this._fireValChangeEvent();
+	}
+
+	_doBindShowHideHandlers () {
+		// watch for the button changing to "open"
+		$("#filter-toggle-btn").click(() => this._doOpen());
+
+		this.$disabledOverlay.off("click").click(() => this._doClose());
+
+		// squash events from the menu, otherwise the dropdown gets hidden when we click inside it
+		this._$outer.click((e) => e.stopPropagation());
 	}
 
 	/**
@@ -526,10 +1096,34 @@ class FilterBox {
 	 */
 	getValues () {
 		const outObj = {};
-		for (const header in this.headers) {
-			if (!this.headers.hasOwnProperty(header)) continue;
-			outObj[header] = this.headers[header].ele.data("getValues")();
-		}
+		Object.keys(this.headers).forEach(header => outObj[header] = this.headers[header].ele.data("getValues")());
+		return outObj;
+	}
+
+	/**
+	 * Returns the list of filters which are not hidden.
+	 */
+	_getVisible () {
+		const outObj = {};
+		Object.keys(this.headers).forEach(h => {
+			outObj[h] = this.headers[h].ele.data("isVisible")();
+		});
+		return outObj;
+	}
+
+	_getGroupState () {
+		const outObj = {};
+		Object.keys(this.multiHeaders).forEach(catName => {
+			outObj[catName] = {mode: this.multiHeaders[catName].filter.mode}
+		});
+		return outObj;
+	}
+
+	_getNestState () {
+		const outObj = {};
+		Object.keys(this.headers).forEach(h => {
+			if (this.headers[h].getNestVisibility) outObj[h] = this.headers[h].getNestVisibility();
+		});
 		return outObj;
 	}
 
@@ -548,48 +1142,104 @@ class FilterBox {
 
 	/**
 	 * Reset the selected filters to default, applying any `selFn` and `deselFn` functions from the filters
+	 * @param showAll True if all filters should be set to Showing
 	 */
-	reset () {
-		for (const header in this.headers) {
-			if (!this.headers.hasOwnProperty(header)) continue;
-			this._reset(header);
-		}
+	reset (showAll) {
+		Object.keys(this.headers).forEach(header => this._reset(header));
+		Object.values(this.multiHeaders).forEach(it => it.ele.data("resetCombiner")());
+		if (showAll) this.showAll();
 		this._fireValChangeEvent();
+	}
+
+	/**
+	 * Show all filters. Requires the filter to have been rendered.
+	 */
+	showAll () {
+		if (this._showAll) this._showAll();
+	}
+
+	/**
+	 * Hide all filters. Requires the filter to have been rendered.
+	 */
+	hideAll () {
+		if (this._hideAll) this._hideAll();
 	}
 
 	setFromSubHashes (subHashes) {
 		const unpacked = {};
 		subHashes.forEach(s => Object.assign(unpacked, UrlUtil.unpackSubHash(s, true)));
-		const toMatch = {};
-		Object.keys(this.headers).forEach(hk => {
-			toMatch[hk.toLowerCase()] = this.headers[hk];
-		});
-		const toRemove = [];
+		const nameToHeader = {};
+		Object.keys(this.headers).forEach(hk => nameToHeader[hk.toLowerCase()] = this.headers[hk]);
+		const consumed = new Set();
+		const consumedClean = new Set();
+
+		// filter values
 		Object.keys(unpacked)
 			.filter(k => k.startsWith(FilterBox._SUB_HASH_PREFIX))
 			.forEach(rawSubhash => {
-				const header = rawSubhash.substring(6);
+				const header = rawSubhash.substring(FilterBox._SUB_HASH_PREFIX.length);
 
-				if (toMatch[header]) {
-					toRemove.push(rawSubhash);
-					toMatch[header].ele.data("setValues")(unpacked[rawSubhash])
-				} else {
-					throw new Error(`Could not find filter with header ${header} for subhash ${rawSubhash}`)
+				if (nameToHeader[header]) {
+					consumed.add(rawSubhash);
+					consumedClean.add(header);
+					nameToHeader[header].ele.data("setValues")(unpacked[rawSubhash])
+				} else throw new Error(`Could not find filter with header ${header} for subhash ${rawSubhash}`);
+			});
+
+		// filter metadata
+		Object.keys(unpacked)
+			.filter(k => k.startsWith(FilterBox._SUB_HASH_META_PREFIX))
+			.forEach(rawSubhash => {
+				const header = rawSubhash.substring(FilterBox._SUB_HASH_META_PREFIX.length);
+
+				if (nameToHeader[header]) {
+					consumed.add(rawSubhash);
+					consumedClean.add(header);
+					const vals = unpacked[rawSubhash];
+					nameToHeader[header].setAndOrBlue(vals[0]);
+					nameToHeader[header].setAndOrRed(vals[1]);
+				} else throw new Error(`Could not find filter with header ${header} for subhash ${rawSubhash}`);
+			});
+
+		// box metadata
+		Object.keys(unpacked)
+			.filter(k => k.startsWith(FilterBox._SUB_HASH_BOX_META_PREFIX))
+			.forEach(rawSubhash => {
+				const header = rawSubhash.substring(FilterBox._SUB_HASH_BOX_META_PREFIX.length);
+
+				if (header === "modeandor") {
+					consumed.add(rawSubhash);
+					consumedClean.add(header);
+					this.modeAndOr = !!Number(unpacked[rawSubhash][0])
 				}
 			});
 
-		if (toRemove.length) {
+		if (consumed.size) {
+			// reset any other fields
+			Object.keys(nameToHeader)
+				.filter(k => !consumedClean.has(k))
+				.forEach(k => {
+					nameToHeader[k].ele.data("resetValues")();
+					nameToHeader[k].ele.data("resetMeta") && nameToHeader[k].ele.data("resetMeta")();
+				});
+
 			const [link, ...sub] = History._getHashParts();
 
 			const outSub = [];
 			Object.keys(unpacked)
-				.filter(k => !toRemove.includes(k))
+				.filter(k => !consumed.has(k))
 				.forEach(k => {
 					outSub.push(`${k}${HASH_SUB_KV_SEP}${unpacked[k].join(HASH_SUB_LIST_SEP)}`)
 				});
 
 			History.setSuppressHistory(true);
-			window.location.hash = `#${link}${outSub.length ? `${HASH_PART_SEP}${outSub.join(HASH_PART_SEP)}` : ""}`;
+			window.history.replaceState(
+				{},
+				document.title,
+				`${location.origin}${location.pathname}${`#${link}${outSub.length ? `${HASH_PART_SEP}${outSub.join(HASH_PART_SEP)}` : ""}`}`
+			);
+
+			this._fireValChangeEvent();
 		}
 	}
 
@@ -609,30 +1259,71 @@ class FilterBox {
 
 		Object.keys(cur).forEach(name => {
 			const vals = cur[name];
-			const outName = `${FilterBox._SUB_HASH_PREFIX}${name}`;
+			const filter = this.headers[name].filter;
+			let isDefaultVals = true;
+			if (filter.selFn || filter.deselFn) {
+				const notDefault = Object.keys(vals).filter(it => !it.startsWith("_")).find(vK => {
+					const val = vals[vK];
+					return (filter.selFn && Number(filter.selFn(vK)) !== val) || (filter.deselFn && Number(filter.deselFn(vK)) !== (-val));
+				});
+				if (notDefault) isDefaultVals = false;
+			} else {
+				if (filter instanceof RangeFilter) {
+					isDefaultVals = filter.min === vals.min && filter.max === vals.max;
+				} else {
+					isDefaultVals = vals._totals.yes === 0 && vals._totals.no === 0
+				}
+			}
 
-			if (vals._totals.yes || vals._totals.no) {
+			const outName = `${FilterBox._SUB_HASH_PREFIX}${name}`;
+			const outMetaName = `${FilterBox._SUB_HASH_META_PREFIX}${name}`;
+
+			if (vals.min != null && vals.max != null) {
+				if (isDefaultVals) return;
+				out[outName] = [
+					`min@${vals.min}`,
+					`max@${vals.max}`
+				];
+			} else if (vals._totals.yes || vals._totals.no) {
 				out[outName] = [];
 				Object.keys(vals).forEach(vK => {
-					if (vK.startsWith("_")) return;
-					const vV = vals[vK];
-					if (!vV) return;
-					out[outName].push(`${vV < 0 ? "!" : ""}${vK}`);
+					if (vK.startsWith("_")) {
+						if (vK.startsWith("_andOr")) {
+							const vV = vals[vK];
+							if (vV.blue !== "OR" || vV.red !== "OR") out[outMetaName] = [vV.blue, vV.red]
+						}
+					} else {
+						if (isDefaultVals) return;
+
+						const vV = vals[vK];
+						if (!vV) return;
+						out[outName].push(`${vV < 0 ? "!" : ""}${vK}`);
+					}
 				});
 			} else {
+				if (isDefaultVals) return;
 				out[outName] = [HASH_SUB_NONE];
 			}
 		});
+
+		const meta = this._getMeta();
+		if (meta.modeAndOr !== "AND") out[`${FilterBox._SUB_HASH_BOX_META_PREFIX}modeAndOr`] = [meta.modeAndOr];
+
 		return out;
 	}
 
 	toDisplay (curr, ...vals) {
 		const res = this.filterList.map((f, i) => {
-			return f.isMulti ? f.toDisplay(curr, ...vals[i]) : f.toDisplay(curr, vals[i])
+			return f._isMulti ? f.toDisplay(curr, ...vals[i]) : f.toDisplay(curr, vals[i])
 		});
 		return this.modeAndOr === "AND" ? res.every(it => it) : res.find(it => it);
 	}
 
+	/**
+	 * Update the filter header summary, usually with data collected from the page's list.
+	 * @param count visible items
+	 * @param maxCount total items
+	 */
 	setCount (count, maxCount) {
 		this.$txtCount.html(`Showing ${count}/${maxCount}`);
 	}
@@ -644,9 +1335,8 @@ class FilterBox {
 	 */
 	_reset (header) {
 		const cur = this.headers[header];
-		cur.ele.find(".filter-pill").each(function () {
-			$(this).data("resetter")();
-		});
+		cur.ele.data("resetValues")();
+		cur.ele.data("resetMeta") && cur.ele.data("resetMeta")();
 	}
 
 	/**
@@ -654,6 +1344,7 @@ class FilterBox {
 	 * @private
 	 */
 	_fireValChangeEvent () {
+		this._doSaveStateDebounced();
 		const eventOut = new Event(FilterBox.EVNT_VALCHANGE);
 		this.inputGroup.dispatchEvent(eventOut);
 	}
@@ -678,20 +1369,27 @@ class FilterBox {
 			const lastHash = UrlUtil.autoEncodeHash(last);
 			const link = $("#listcontainer").find(`.list a[href="#${lastHash.toLowerCase()}"]`);
 			if (!link.length) History._freshLoad();
+		} else if (History.lastLoadedId == null && !History.initialLoad) {
+			History._freshLoad();
 		}
 	}
 }
 
 FilterBox.CLS_INPUT_GROUP_BUTTON = "input-group-btn";
-FilterBox.CLS_DROPDOWN_MENU = "dropdown-menu";
 FilterBox.CLS_DROPDOWN_MENU_FILTER = "dropdown-menu-filter";
 FilterBox.EVNT_VALCHANGE = "valchange";
 FilterBox.SOURCE_HEADER = "Source";
 FilterBox._PILL_STATES = ["ignore", "yes", "no"];
 FilterBox._STORAGE_NAME = "filterState";
+FilterBox._STORAGE_NAME_META = "filterMetaState";
+FilterBox._STORAGE_NAME_VISIBLE = "filterStateVisible";
+FilterBox._STORAGE_NAME_GROUP_STATE = "filterStateGroupState";
+FilterBox._STORAGE_NAME_NEST_STATE = "filterStateNestState";
 FilterBox._SUB_HASH_PREFIX = "filter";
+FilterBox._SUB_HASH_META_PREFIX = "flmeta";
+FilterBox._SUB_HASH_BOX_META_PREFIX = "fbmeta";
 
-class Filter {
+class FilterBase {
 	/**
 	 * A single filter category
 	 *
@@ -716,6 +1414,13 @@ class Filter {
 	 *   (OPTIONAL)
 	 *   deselFn: a function, defaults items as "do not match this" if `deselFn(item)` is true
 	 *
+	 *   (OPTIONAL)
+	 *   umbrellaItems: e.g. "Choose Any"; an array of items that should allow anything containing it to always be
+	 *     displayed when checking for other items in the filter
+	 *
+	 *   (OPTIONAL)
+	 *   umbrellaExcludes: items that shouldn't be included in umbrellaItems
+	 *
 	 */
 	constructor (options) {
 		this.header = options.header;
@@ -725,6 +1430,8 @@ class Filter {
 		this.deselFn = options.deselFn;
 		this.attrName = options.attrName;
 		this.minimalUI = options.minimalUI;
+		this.umbrellaItems = options.umbrellaItems;
+		this.umbrellaExcludes = options.umbrellaExcludes;
 	}
 
 	/**
@@ -732,7 +1439,9 @@ class Filter {
 	 * @param item the item to add
 	 */
 	addIfAbsent (item) {
-		if (!this.items.find(it => Filter._checkMatches(it, item))) this.items.push(item);
+		if (item == null) return;
+		if (item instanceof Array) item.forEach(it => this.addIfAbsent(it));
+		else if (!this.items.find(it => Filter._checkMatches(it, item))) this.items.push(item);
 	}
 
 	static _checkMatches (item1, item2) {
@@ -757,9 +1466,27 @@ class Filter {
 	 * @returns {*} true if this item should be displayed, false otherwise
 	 */
 	toDisplay (valObj, toCheck) {
-		// TODO handle AND/OR
 		const map = valObj[this.header];
+		if (!map) return true; // discount any filters which were not rendered
+
 		const totals = map._totals;
+
+		function toCheckVal (tc) {
+			if (tc instanceof FilterItem) return tc.item;
+			return tc;
+		}
+
+		const isUmbrella = () => {
+			if (this.umbrellaItems) {
+				if (!toCheck) return false;
+
+				if (this.umbrellaExcludes && this.umbrellaExcludes.some(it => map[it])) return false;
+
+				return (toCheck instanceof Array ? this.umbrellaItems.find(u => toCheck.includes(u)) : this.umbrellaItems.includes(toCheck)) &&
+					(this.umbrellaItems.find(u => map[toCheckVal(u)] === 0) || this.umbrellaItems.find(u => map[toCheckVal(u)] === 1));
+			}
+		};
+
 		if (toCheck instanceof Array) {
 			let hide = false;
 			let display = false;
@@ -771,14 +1498,14 @@ class Filter {
 				}
 
 				toCheck.forEach(tc => {
-					if (map[tc] === 1) { // if any are 1 (nlue) include if they match
+					if (map[toCheckVal(tc)] === 1 || isUmbrella()) { // if any are 1 (blue) include if they match
 						display = true;
 					}
 				});
 			} else {
 				let ttlYes = 0;
 				toCheck.forEach(tc => {
-					if (map[tc] === 1) {
+					if (map[toCheckVal(tc)] === 1) {
 						ttlYes++;
 					}
 				});
@@ -787,14 +1514,14 @@ class Filter {
 
 			if (map._andOr.red === "OR") {
 				toCheck.forEach(tc => {
-					if (map[tc] === -1) { // if any are -1 (red) exclude if they match
+					if (map[toCheckVal(tc)] === -1) { // if any are -1 (red) exclude if they match
 						hide = true;
 					}
 				});
 			} else {
 				let ttlNo = 0;
 				toCheck.forEach(tc => {
-					if (map[tc] === -1) {
+					if (map[toCheckVal(tc)] === -1) {
 						ttlNo++;
 					}
 				});
@@ -803,7 +1530,7 @@ class Filter {
 
 			return display && !hide;
 		} else {
-			return doCheck();
+			return doCheck.bind(this)();
 		}
 
 		function doCheck () {
@@ -811,13 +1538,13 @@ class Filter {
 			let hide = false;
 			if (map._andOr.blue === "OR") {
 				if (totals.yes > 0) {
-					display = map[toCheck] === 1;
+					display = map[toCheckVal(toCheck)] === 1 || isUmbrella();
 				} else {
 					display = true;
 				}
 			} else {
 				if (totals.yes > 0) {
-					display = map[toCheck] === 1 && totals.yes === 1;
+					display = (map[toCheckVal(toCheck)] === 1 || isUmbrella()) && totals.yes === 1;
 				} else {
 					display = true;
 				}
@@ -825,10 +1552,10 @@ class Filter {
 
 			if (map._andOr.red === "OR") {
 				if (totals.no > 0) {
-					hide = map[toCheck] === -1;
+					hide = map[toCheckVal(toCheck)] === -1;
 				}
 			} else {
-				hide = totals.no === 1 && map[toCheck] === -1;
+				hide = totals.no === 1 && map[toCheckVal(toCheck)] === -1;
 			}
 
 			return display && !hide;
@@ -836,36 +1563,138 @@ class Filter {
 	}
 }
 
+class Filter extends FilterBase {}
+
 class FilterItem {
 	/**
 	 * An alternative to string `Filter.items` with a change-handling function
-	 * @param item string
-	 * @param changeFn called when this item is clicked/etc; calls `changeFn(item)`
+	 * @param options containing:
+	 *   `item`: the item string
+	 *   `changeFn`: (optional) function to call when filter is changed
+	 *   `group` (optional) group this item belongs to, if it's part of a GroupedFilter
+	 *   `nest` (optional) nest this item belongs to
+	 *   `nestHidden` (optional) if nested, default visibility state
 	 */
-	constructor (item, changeFn) {
-		this.item = item;
-		this.changeFn = changeFn;
+	constructor (options) {
+		this.item = options.item;
+		this.changeFn = options.changeFn;
+		this.group = options.group;
+		this.nest = options.nest;
+		this.nestHidden = options.nestHidden;
 	}
 }
 
-class RangeFilter extends Filter {
-	// TODO implement a filter displayed as a range of items on a slider
+class RangeFilter extends FilterBase {
+	constructor (options) {
+		super(options);
+		this.min = options.min;
+		this.max = options.max;
+		this.labels = !!options.labels;
+		this.allowGreater = !!options.allowGreater;
+		this.suffix = options.suffix;
+	}
+
+	addIfAbsent (item) {
+		if (this.labels) {
+			super.addIfAbsent(item);
+			this._addNumberIfAbsent(this.items.length - 1);
+		} else {
+			this._addNumberIfAbsent(item);
+		}
+	}
+
+	_addNumberIfAbsent (number) {
+		if (number == null || isNaN(number)) return;
+		if (this.min == null && this.max == null) this.min = this.max = number;
+		else {
+			const oMin = this.min;
+			const oMax = this.max;
+			this.min = Math.min(this.min, number);
+			this.max = Math.max(this.max, number);
+			if (this.$slider) {
+				const [lower, upper] = this.$slider.slider("values");
+
+				const updateMin = lower === oMin && this.min !== oMin;
+				const updateMax = upper === oMax && this.max !== oMax;
+
+				if (updateMin) this.$slider.slider("option", "min", this.min);
+				if (updateMax) this.$slider.slider("option", "max", this.max);
+
+				if (updateMin && updateMax) this.$slider.slider("values", [this.min, this.max]);
+				else if (updateMin) this.$slider.slider("values", [this.min, upper]);
+				else if (updateMax) this.$slider.slider("values", [lower, this.max]);
+			}
+		}
+	}
+
+	toDisplay (valObj, toCheck) {
+		const range = valObj[this.header];
+		if (!range) return true; // discount any filters which were not rendered
+
+		// match everything if filter is set to complete range
+		if (toCheck == null) return range.min === this.min && range.max === this.max;
+
+		if (this.labels) {
+			const slice = this.items.slice(range.min, range.max + 1);
+			if (toCheck instanceof Array) {
+				return !!toCheck.find(it => slice.includes(it));
+			} else {
+				return slice.includes(toCheck);
+			}
+		} else {
+			const isGtMin = toCheck instanceof Array ? range.min <= Math.min(...toCheck) : range.min <= toCheck;
+			const isLtMax = toCheck instanceof Array ? range.max >= Math.max(...toCheck) : range.max >= toCheck;
+			if (this.allowGreater) return isGtMin && (isLtMax || range.max === this.max);
+			return isGtMin && isLtMax;
+		}
+	}
 }
 
-class AllSourcesFilter extends Filter {
-	// TODO implement a filter with an "All Sources" button (toggled off by default)
+class SearchFilter extends FilterBase {
+
+}
+
+class GroupedFilter extends FilterBase {
+	/**
+	 * An extension of the basic filter, which enables visual grouping of elements.
+	 * @param options As with `Filter`, with two extra fields:
+	 *
+	 *   (OPTIONAL)
+	 *   groupFn: function which takes an item, and returns a number (from 0 to numGroups, inclusive)
+	 *     Either this function or a `group` on a FilterItem must be specified.
+	 *
+	 */
+	constructor (options) {
+		super(options);
+		this.numGroups = 1;
+		this.groupFn = options.groupFn;
+	}
 }
 
 class MultiFilter {
 	/**
 	 * A group of multiple `Filter`s, which are OR'd together
-	 * @param categoryName a prefix to display before the filter headers
+	 * @param options should include `.name`
 	 * @param filters the list of filters
 	 */
-	constructor (categoryName, ...filters) {
-		this.categoryName = categoryName;
+	constructor (options, ...filters) {
+		this.categoryName = options.name;
+		// designed to be toggle-able: to switch, toggle class `wrp-multi-compact` on the wrapper
+		// warning: only fully implemented for RangeFilter; currently only used there
+		this.compact = !!options.compact;
+		this.mode = options.mode || "or";
+
 		this.filters = filters;
-		this.isMulti = true;
+		this._originalMode = options.mode;
+		this._isMulti = true;
+	}
+
+	setModeAnd () {
+		this.mode = "and";
+	}
+
+	setModeOr () {
+		this.mode = "or";
 	}
 
 	/**
@@ -882,17 +1711,22 @@ class MultiFilter {
 		const results = [];
 		for (let i = 0; i < this.filters.length; ++i) {
 			const f = this.filters[i];
-			// TODO use and/or flag?
-			const totals = valObj[f.header]._totals;
+			if (f instanceof RangeFilter) {
+				results.push(this.filters[i].toDisplay(valObj, toChecks[i]))
+			} else {
+				const totals = valObj[f.header]._totals;
 
-			if (totals.yes === 0 && totals.no === 0) results.push(null);
-			else {
-				results.push(this.filters[i].toDisplay(valObj, toChecks[i]));
+				if (totals.yes === 0 && totals.no === 0) results.push(null);
+				else {
+					results.push(this.filters[i].toDisplay(valObj, toChecks[i]));
+				}
 			}
 		}
 		const resultsFilt = results.filter(r => r !== null);
-		if (!resultsFilt.length) return true;
-		return resultsFilt.find(r => r);
+		if (this.mode === "or") {
+			if (!resultsFilt.length) return true;
+			return resultsFilt.find(r => r);
+		} else return resultsFilt.filter(it => it).length === resultsFilt.length;
 	}
 }
 

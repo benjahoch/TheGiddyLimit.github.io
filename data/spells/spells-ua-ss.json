@@ -27,7 +27,7 @@
 				{
 					"type": "timed",
 					"duration": {
-						"type": "minutes",
+						"type": "minute",
 						"amount": 1
 					},
 					"concentration": true
@@ -50,6 +50,12 @@
 			],
 			"savingThrow": [
 				"wisdom"
+			],
+			"conditionInflict": [
+				"frightened"
+			],
+			"areaTags": [
+				"ST"
 			]
 		},
 		{
@@ -112,7 +118,7 @@
 					"type": "entries",
 					"name": "Bless Water",
 					"entries": [
-						"You touch one vial of water and cause it to become holy water."
+						"You touch one {@item vial|phb} of water and cause it to become {@item Holy Water (flask)|phb|holy water}."
 					]
 				},
 				{
@@ -133,7 +139,7 @@
 					"type": "entries",
 					"name": "Funeral Rite",
 					"entries": [
-						"You bless one corpse within 5 feet of you. For the next 24 hours, the target can't become undead by any means short of a wish spell."
+						"You bless one corpse within 5 feet of you. For the next 24 hours, the target can't become undead by any means short of a {@spell wish} spell."
 					]
 				},
 				{
@@ -150,6 +156,9 @@
 						"You touch adult humanoids willing to be bonded together in marriage. For the next 24 hours, each target gains a +2 bonus to AC and saving throws while they are within 30 feet of each other. A creature can benefit from this ceremony just once."
 					]
 				}
+			],
+			"areaTags": [
+				"ST"
 			]
 		},
 		{
@@ -198,8 +207,8 @@
 						"Damage Type"
 					],
 					"colStyles": [
-						"col-xs-1 text-align-center",
-						"col-xs-11"
+						"col-1 text-align-center",
+						"col-11"
 					],
 					"rows": [
 						[
@@ -283,7 +292,7 @@
 					"type": "entries",
 					"name": "At Higher Levels",
 					"entries": [
-						"When you cast this spell using a spell slot of 2nd level or higher, each target takes extra damage of the type rolled. The extra damage equals {@dice 1d6} for each slot level above 1st."
+						"When you cast this spell using a spell slot of 2nd level or higher, each target takes extra damage of the type rolled. The extra damage equals {@scaledice 2d8|1-9|1d6} for each slot level above 1st."
 					]
 				}
 			],
@@ -296,6 +305,12 @@
 				"poison",
 				"psychic",
 				"thunder"
+			],
+			"spellAttack": [
+				"R"
+			],
+			"areaTags": [
+				"ST"
 			]
 		},
 		{
@@ -325,7 +340,7 @@
 				{
 					"type": "timed",
 					"duration": {
-						"type": "hours",
+						"type": "hour",
 						"amount": 8
 					},
 					"concentration": true
@@ -398,13 +413,17 @@
 			},
 			"entries": [
 				"You raise your hand, and burning radiance erupts from it. Each creature of your choice that you can see within 5 feet of you must succeed on a Constitution saving throw or take {@dice 1d6} radiant damage.",
-				"The spell's damage increases by {@dice 1d6} when you reach 5th level ({@dice 2d6}), 11th level ({@dice 3d6}), and 17th level ({@dice 4d8})."
+				"The spell's damage increases by {@dice 1d6} when you reach 5th level ({@dice 2d6}), 11th level ({@dice 3d6}), and 17th level ({@dice 4d6})."
 			],
 			"damageInflict": [
 				"radiant"
 			],
 			"savingThrow": [
 				"constitution"
+			],
+			"scalingEffects": true,
+			"areaTags": [
+				"S"
 			]
 		},
 		{
@@ -434,7 +453,7 @@
 				{
 					"type": "timed",
 					"duration": {
-						"type": "hours",
+						"type": "hour",
 						"amount": 24
 					}
 				}
@@ -453,8 +472,9 @@
 			},
 			"entries": [
 				"You create a healing elixir in a simple vial that appears in your hand. The elixir retains its potency for the duration or until it's consumed, at which point the vial vanishes.",
-				"As an action, a creature can drink the elixir or administer it to another creature. The drinker regains {@dice 2d4+2} hit points."
-			]
+				"As an action, a creature can drink the elixir or administer it to another creature. The drinker regains {@dice 2d4 + 2} hit points."
+			],
+			"isHeal": true
 		},
 		{
 			"name": "Infestation (UA)",
@@ -514,6 +534,10 @@
 			],
 			"savingThrow": [
 				"constitution"
+			],
+			"scalingEffects": true,
+			"areaTags": [
+				"ST"
 			]
 		},
 		{
@@ -557,6 +581,13 @@
 			"damageInflict": [
 				"piercing",
 				"slashing"
+			],
+			"spellAttack": [
+				"M"
+			],
+			"scalingEffects": true,
+			"areaTags": [
+				"ST"
 			]
 		},
 		{
@@ -607,6 +638,9 @@
 			],
 			"savingThrow": [
 				"constitution"
+			],
+			"areaTags": [
+				"ST"
 			]
 		},
 		{
@@ -635,7 +669,7 @@
 				{
 					"type": "timed",
 					"duration": {
-						"type": "minutes",
+						"type": "minute",
 						"amount": 10
 					},
 					"concentration": true
@@ -655,6 +689,9 @@
 			},
 			"entries": [
 				"You attune your senses to pick up the emotions of others for the duration. When you cast the spell, and as your action on each turn until the spell ends, you can focus your senses on one humanoid you can see within 30 feet of you. You instantly learn the target's prevailing emotion, whether it's love, anger, pain, fear, calm, or something else. If the target isn't actually humanoid or it is immune to being {@condition charmed}, you sense that it is calm."
+			],
+			"areaTags": [
+				"ST"
 			]
 		},
 		{
@@ -719,6 +756,13 @@
 			],
 			"opposedCheck": [
 				"intelligence"
+			],
+			"conditionInflict": [
+				"prone",
+				"restrained"
+			],
+			"areaTags": [
+				"ST"
 			]
 		},
 		{
@@ -770,6 +814,9 @@
 			},
 			"entries": [
 				"Each sleeping creature you choose within range awakens, and then each {@condition prone} creature within range can stand up without expending any movement."
+			],
+			"areaTags": [
+				"MT"
 			]
 		},
 		{
@@ -821,6 +868,10 @@
 			],
 			"savingThrow": [
 				"wisdom"
+			],
+			"scalingEffects": true,
+			"areaTags": [
+				"ST"
 			]
 		},
 		{
@@ -849,7 +900,7 @@
 				{
 					"type": "timed",
 					"duration": {
-						"type": "minutes",
+						"type": "minute",
 						"amount": 10
 					},
 					"concentration": true
@@ -865,10 +916,13 @@
 			},
 			"entries": [
 				"Music of a style you choose fills the air around you in a 30-foot radius. The music spreads around corners and can be heard from up to 100 feet away. The music moves with you, centered on you for the duration.",
-				"Until the spell ends, you make Charisma (Performance) checks with advantage. In addition, you can use a bonus action on each of your turns to beguile one creature you choose within 30 feet of you that can see you and hear the music. The creature must make a Charisma saving throw. If you or your companions are attacking it, the creature automatically succeeds on the saving throw. On a failure, the creature becomes friendly to you for as long as it can hear the music and for 1 hour thereafter. You make Charisma (Deception) checks and Charisma (Persuasion) checks against creatures made friendly by this spell with advantage."
+				"Until the spell ends, you make Charisma ({@skill Performance}) checks with advantage. In addition, you can use a bonus action on each of your turns to beguile one creature you choose within 30 feet of you that can see you and hear the music. The creature must make a Charisma saving throw. If you or your companions are attacking it, the creature automatically succeeds on the saving throw. On a failure, the creature becomes friendly to you for as long as it can hear the music and for 1 hour thereafter. You make Charisma ({@skill Deception}) checks and Charisma ({@skill Persuasion}) checks against creatures made friendly by this spell with advantage."
 			],
 			"savingThrow": [
 				"charisma"
+			],
+			"areaTags": [
+				"S"
 			]
 		},
 		{
@@ -897,7 +951,7 @@
 				{
 					"type": "timed",
 					"duration": {
-						"type": "rounds",
+						"type": "round",
 						"amount": 1
 					}
 				}
@@ -912,6 +966,9 @@
 			},
 			"entries": [
 				"You touch one creature, imbuing it with vitality. If the target has at least 1 hit point, it gains a number of temporary hit points equal to {@dice 1d4} + your spellcasting ability modifier. The temporary hit points are lost when the spell ends."
+			],
+			"areaTags": [
+				"ST"
 			]
 		},
 		{
@@ -997,7 +1054,7 @@
 				{
 					"type": "timed",
 					"duration": {
-						"type": "minutes",
+						"type": "minute",
 						"amount": 1
 					},
 					"concentration": true

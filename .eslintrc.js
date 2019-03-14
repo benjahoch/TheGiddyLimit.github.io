@@ -5,6 +5,9 @@ module.exports = {
 		"es6": true,
 		"jquery": true
 	},
+	"parserOptions": {
+		"ecmaVersion": 9
+	},
 	"rules": {
 		"accessor-pairs": "error",
 		"arrow-spacing": ["error", {"before": true, "after": true}],
@@ -24,7 +27,7 @@ module.exports = {
 		"dot-location": ["error", "property"],
 		"eqeqeq": ["error", "always", {"null": "ignore"}],
 		"func-call-spacing": ["error", "never"],
-		"generator-star-spacing": ["error", {"before": true, "after": true}],
+		"generator-star-spacing": ["error", {"before": false, "after": true}],
 		"handle-callback-err": ["error", "^(err|error)$"],
 		"indent": [
 			"error",
@@ -68,7 +71,7 @@ module.exports = {
 		"no-irregular-whitespace": "error",
 		"no-iterator": "error",
 		"no-label-var": "error",
-		"no-labels": ["error", {"allowLoop": false, "allowSwitch": false}],
+		"no-labels": ["error", {"allowLoop": true, "allowSwitch": false}],
 		"no-lone-blocks": "error",
 		"no-mixed-operators": ["error", {
 			"groups": [

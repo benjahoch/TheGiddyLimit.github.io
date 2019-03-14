@@ -1,7 +1,7 @@
 {
 	"$schema": "http://json-schema.org/draft-06/schema#",
-	"version": "1.1.1",
-	"title": "SpellsArray",
+	"version": "1.3.2",
+	"title": "Spells",
 	"type": "object",
 
 	"definitions": {
@@ -23,8 +23,16 @@
 						"D",
 						"N",
 						"T",
-						"C"
+						"C",
+						"P"
 					]
+				},
+				"subschools": {
+					"description": "For homebrew use only.",
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
 				},
 				"meta": {
 					"type": "object",
@@ -57,7 +65,8 @@
 								"cone",
 								"radius",
 								"sphere",
-								"hemisphere"
+								"hemisphere",
+								"cylinder"
 							]
 						},
 						"distance": {
@@ -77,6 +86,24 @@
 									]
 								},
 								"amount": {
+									"type": "integer"
+								},
+								"typeSecondary": {
+									"description": "Homebrew only",
+									"type": "string",
+									"enum": [
+										"feet",
+										"miles",
+										"self",
+										"touch",
+										"special",
+										"unlimited",
+										"plane",
+										"sight"
+									]
+								},
+								"amountSecondary": {
+									"description": "Homebrew only",
 									"type": "integer"
 								}
 							},
@@ -195,11 +222,50 @@
 					],
 					"additionalProperties": false
 				},
+				"races": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"name": {
+								"type": "string"
+							},
+							"source": {
+								"type": "string"
+							},
+							"baseName": {
+								"type": "string"
+							},
+							"baseSource": {
+								"type": "string"
+							}
+						},
+						"required": ["name", "source"]
+					}
+				},
 				"source": {
 					"type": "string"
 				},
 				"page": {
 					"type": "integer"
+				},
+				"otherSources": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"source": {
+								"type": "string"
+							},
+							"page": {
+								"type": "integer"
+							}
+						},
+						"required": [
+							"source"
+						],
+						"additionalProperties": false
+					}
 				},
 				"damageInflict": {
 					"type": "array",
@@ -237,6 +303,15 @@
 						]
 					}
 				},
+				"conditionInflict": {
+					"type": "array",
+					"items": {
+						"type": "string",
+						"enum": [
+							"blinded", "charmed", "deafened", "exhaustion", "frightened", "grappled", "incapacitated", "invisible", "paralyzed", "petrified", "poisoned", "prone", "restrained", "stunned", "unconscious"
+						]
+					}
+				},
 				"savingThrow": {
 					"type": "array",
 					"items": {
@@ -254,6 +329,35 @@
 							"strength", "constitution", "dexterity", "intelligence", "wisdom", "charisma"
 						]
 					}
+				},
+				"permanentEffects": {
+					"description": "Used to flag spells that can/will have permanent effects, but are not listed as having permanent duration",
+					"type": "boolean"
+				},
+				"spellAttack": {
+					"type": "array",
+					"items": {
+						"type": "string",
+						"enum": [
+							"M", "R", "O"
+						]
+					}
+				},
+				"scalingEffects": {
+					"type": "boolean"
+				},
+				"isHeal": {
+					"type": "boolean"
+				},
+				"isSummon": {
+					"type": "boolean"
+				},
+				"areaTags": {
+					"type": "array",
+					"items": {
+						"type": "string",
+						"enum": ["ST", "MT", "R", "N", "C","Y", "H", "L", "S", "Q", "W"]
+					}
 				}
 			},
 			"required": [
@@ -262,12 +366,10 @@
 				"school",
 				"time",
 				"range",
-				"components",
 				"duration",
 				"classes",
 				"entries",
-				"source",
-				"page"
+				"source"
 			],
 			"additionalProperties": false
 		},
@@ -307,13 +409,13 @@
 						"type": {
 							"type": "string",
 							"enum": [
-								"hours",
-								"minutes",
-								"turns",
-								"rounds",
-								"weeks",
-								"days",
-								"years"
+								"hour",
+								"minute",
+								"turn",
+								"round",
+								"week",
+								"day",
+								"year"
 							]
 						},
 						"amount": {

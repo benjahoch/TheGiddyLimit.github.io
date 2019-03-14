@@ -3,8 +3,6 @@
 const JSON_URL = "data/invocations.json";
 
 const ID_INVOCATION_LIST = "invocationsList";
-const ID_STATS_PREREQUISITES = "prerequisites";
-const ID_TEXT = "text";
 
 const JSON_ITEM_NAME = "name";
 const JSON_ITEM_SOURCE = "source";
@@ -30,7 +28,9 @@ const LIST_LEVEL = "level";
 const LIST_SPELL = "spell";
 
 window.onload = function load () {
-	DataUtil.loadJSON(JSON_URL, onJsonLoad);
+	ExcludeUtil.initialise();
+	DataUtil.loadJSON(JSON_URL).then(onJsonLoad);
+	initializationFunctions.initHandleFilterButtonClicks();
 };
 
 function sortLevelAsc (a, b) {
@@ -49,6 +49,15 @@ function listSortInvocations (a, b, o) {
 
 let list;
 const sourceFilter = getSourceFilter();
+const spellFilter = new Filter({
+	header: "Spell or Feature",
+	items: ["Eldritch Blast", "Hex/Curse", STR_NONE]
+});
+const levelFilter = new Filter({
+	header: "Warlock Level",
+	items: [5, 7, 9, 12, 15, 18, STR_ANY],
+	displayFn: (it) => it === STR_ANY ? it : `Level ${it}`
+});
 let filterBox;
 function onJsonLoad (data) {
 	const patronFilter = new Filter({
@@ -61,11 +70,6 @@ function onJsonLoad (data) {
 		items: ["Blade", "Chain", "Tome", STR_ANY],
 		displayFn: Parser.invoPactToFull
 	});
-	const spellFilter = new Filter({
-		header: "Spell or Feature",
-		items: ["Eldritch Blast", "Hex/Curse", STR_NONE]
-	});
-	const levelFilter = new Filter({header: "Warlock Level", items: ["5", "7", "9", "12", "15", "18", STR_ANY]});
 
 	filterBox = initFilterBox(sourceFilter, pactFilter, patronFilter, spellFilter, levelFilter);
 
@@ -94,13 +98,23 @@ function onJsonLoad (data) {
 	ListUtil.initGenericPinnable();
 
 	addInvocations(data);
-	BrewUtil.addBrewData(addInvocations);
-	BrewUtil.makeBrewButton("manage-brew");
-	BrewUtil.bind({list, filterBox, sourceFilter});
+	BrewUtil.pAddBrewData()
+		.then(handleBrew)
+		.then(BrewUtil.pAddLocalBrewData)
+		.catch(BrewUtil.purgeBrew)
+		.then(() => {
+			BrewUtil.makeBrewButton("manage-brew");
+			BrewUtil.bind({list, filterBox, sourceFilter});
+			ListUtil.loadState();
+			RollerUtil.addListRollButton();
 
-	History.init();
-	handleFilterChange();
-	RollerUtil.addListRollButton();
+			History.init(true);
+		});
+}
+
+function handleBrew (homebrew) {
+	addInvocations(homebrew);
+	return Promise.resolve();
 }
 
 let invoList = [];
@@ -113,6 +127,7 @@ function addInvocations (data) {
 	let tempString = "";
 	for (; ivI < invoList.length; ivI++) {
 		const p = invoList[ivI];
+		if (ExcludeUtil.isExcluded(p.name, "invocation", p.source)) continue;
 
 		if (!p.prerequisites) p.prerequisites = {};
 		if (!p.prerequisites.pact) p.prerequisites.pact = p.prerequisites.or && p.prerequisites.or.find(it => it.pact) ? STR_SPECIAL : STR_ANY;
@@ -147,7 +162,7 @@ function addInvocations (data) {
 					<span class="${LIST_SOURCE} ${CLS_COL2} source${Parser.sourceJsonToAbv(p[JSON_ITEM_SOURCE])} text-align-center" title="${Parser.sourceJsonToFull(p[JSON_ITEM_SOURCE])}">${Parser.sourceJsonToAbv(p[JSON_ITEM_SOURCE])}</span>
 					<span class="${LIST_PACT} ${CLS_COL3} ${p.prerequisites[JSON_ITEM_PACT] === STR_ANY ? CLS_LI_NONE : STR_EMPTY}">${p.prerequisites[JSON_ITEM_PACT]}</span>
 					<span class="${LIST_PATRON} ${CLS_COL4} ${p.prerequisites[JSON_ITEM_PATRON] === STR_ANY ? CLS_LI_NONE : STR_EMPTY}">${Parser.invoPatronToShort(p.prerequisites[JSON_ITEM_PATRON])}</span>
-					<span class="${LIST_SPELL} ${CLS_COL5} ${p.prerequisites[JSON_ITEM_SPELL] === STR_NONE ? CLS_LI_NONE : STR_EMPTY}">${p.prerequisites[JSON_ITEM_SPELL]}</span>
+					<span class="${LIST_SPELL} ${CLS_COL5} ${p.prerequisites[JSON_ITEM_SPELL] === STR_NONE ? CLS_LI_NONE : STR_EMPTY}">${p.prerequisites[JSON_ITEM_SPELL] instanceof Array ? p.prerequisites[JSON_ITEM_SPELL].join("/") : p.prerequisites[JSON_ITEM_SPELL]}</span>
 					<span class="${LIST_LEVEL} ${CLS_COL6} ${p.prerequisites[JSON_ITEM_LEVEL] === STR_ANY ? CLS_LI_NONE : STR_EMPTY} text-align-center">${p.prerequisites[JSON_ITEM_LEVEL]}</span>
 				</a>
 			</li>
@@ -155,12 +170,21 @@ function addInvocations (data) {
 
 		// populate filters
 		sourceFilter.addIfAbsent(p[JSON_ITEM_SOURCE]);
+		if (p.prerequisites[JSON_ITEM_SPELL]) {
+			if (p.prerequisites[JSON_ITEM_SPELL] instanceof Array) p.prerequisites[JSON_ITEM_SPELL].forEach(sp => spellFilter.addIfAbsent(sp));
+			else spellFilter.addIfAbsent(p.prerequisites[JSON_ITEM_SPELL]);
+		}
+		if (p.prerequisites[JSON_ITEM_LEVEL]) {
+			levelFilter.addIfAbsent(p.prerequisites[JSON_ITEM_LEVEL]);
+		}
 	}
 	const lastSearch = ListUtil.getSearchTermAndReset(list);
 	$(`#${ID_INVOCATION_LIST}`).append(tempString);
 
 	// sort filters
 	sourceFilter.items.sort(SortUtil.ascSort);
+	spellFilter.items.sort(SortUtil.ascSort);
+	levelFilter.items.sort(SortUtil.ascSort);
 
 	list.reIndex();
 	if (lastSearch) list.search(lastSearch);
@@ -178,7 +202,6 @@ function addInvocations (data) {
 	UrlUtil.bindLinkExportButton(filterBox);
 	ListUtil.bindDownloadButton();
 	ListUtil.bindUploadButton();
-	ListUtil.loadState();
 }
 
 function handleFilterChange () {
@@ -213,22 +236,21 @@ function getSublistItem (inv, pinId) {
 }
 
 function loadhash (jsonIndex) {
-	const $content = $(`#pagecontent`);
-	const $name = $content.find(`th.name`);
-	const STATS_PREREQUISITES = document.getElementById(ID_STATS_PREREQUISITES);
-	const STATS_TEXT = document.getElementById(ID_TEXT);
-
+	EntryRenderer.getDefaultRenderer().setFirstSection(true);
+	const $content = $(`#pagecontent`).empty();
 	const inv = invoList[jsonIndex];
+	$content.append(`
+		${EntryRenderer.utils.getBorderTr()}
+		${EntryRenderer.utils.getNameTr(inv)}
+		${Object.keys(inv.prerequisites).length ? `<tr><td colspan="6"><span class="prerequisites">${EntryRenderer.invocation.getPrerequisiteText(inv.prerequisites)}</span></td></tr>` : ""}
+		<tr><td class="divider" colspan="6"><div></div></td></tr>
+		<tr><td colspan="6">${EntryRenderer.getDefaultRenderer().renderEntry({entries: inv.entries}, 1)}</td></tr>
+		${EntryRenderer.invocation.getPreviouslyPrintedText(inv)}
+		${EntryRenderer.utils.getPageTr(inv)}
+		${EntryRenderer.utils.getBorderTr()}
+	`);
 
-	$name.html(inv[JSON_ITEM_NAME]);
-
-	loadInvocation();
-
-	function loadInvocation () {
-		STATS_PREREQUISITES.innerHTML = EntryRenderer.invocation.getPrerequisiteText(inv.prerequisites);
-		STATS_TEXT.innerHTML = EntryRenderer.getDefaultRenderer().renderEntry({entries: inv.entries}, 1);
-		$content.find(`#source`).html(`<td colspan=6><b>Source: </b> <i>${Parser.sourceJsonToFull(inv.source)}</i>${inv.page ? `, page ${inv.page}` : ""}</td>`);
-	}
+	ListUtil.updateSelected();
 }
 
 function loadsub (sub) {

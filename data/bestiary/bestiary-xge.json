@@ -8,8 +8,18 @@
 			"alignment": [
 				"U"
 			],
-			"ac": "15 (natural armor)",
-			"hp": "10 (4d4)",
+			"ac": [
+				{
+					"ac": 15,
+					"from": [
+						"natural armor"
+					]
+				}
+			],
+			"hp": {
+				"average": 10,
+				"formula": "4d4"
+			},
 			"speed": {
 				"walk": 30,
 				"climb": 30
@@ -41,11 +51,14 @@
 				{
 					"name": "Slam",
 					"entries": [
-						"Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 5 (1d4+3) bludgeoning damage."
+						"{@atk mw} {@hit 5} to hit, reach 5 ft., one target. {@h}5 ({@damage 1d4 + 3}) bludgeoning damage."
 					]
 				}
 			],
-			"page": 169
+			"page": 169,
+			"senseTags": [
+				"B"
+			]
 		}
 	]
 }

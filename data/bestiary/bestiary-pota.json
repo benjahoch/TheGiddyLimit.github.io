@@ -2,6 +2,7 @@
 	"monster": [
 		{
 			"name": "Aerisi Kalinoth",
+			"isNpc": true,
 			"size": "M",
 			"type": {
 				"type": "humanoid",
@@ -11,11 +12,21 @@
 			},
 			"source": "PotA",
 			"alignment": [
-				"L",
+				"N",
 				"E"
 			],
-			"ac": "13 (16 with mage armor)",
-			"hp": "66 (12d8+12)",
+			"ac": [
+				13,
+				{
+					"ac": 16,
+					"condition": "with {@spell mage armor}",
+					"braces": true
+				}
+			],
+			"hp": {
+				"average": 66,
+				"formula": "12d8 + 12"
+			},
 			"speed": {
 				"walk": 30
 			},
@@ -41,7 +52,7 @@
 				{
 					"name": "Fey Ancestry",
 					"entries": [
-						"Aerisi has advantage on saving throws against being charmed, and magic can't put her to sleep."
+						"Aerisi has advantage on saving throws against being {@condition charmed}, and magic can't put her to sleep."
 					]
 				},
 				{
@@ -61,11 +72,14 @@
 				{
 					"name": "Windvane",
 					"entries": [
-						"Melee or Ranged Weapon Attack: +9 to hit, reach 5 ft. or range 20/60 ft., one target. Hit: 9 (1d6+6) piercing damage, or 10 (1d8+6) piercing damage if used with two hands to make a melee attack, plus 3 (1d6) lightning damage."
+						"{@atk mw,rw} {@hit 9} to hit, reach 5 ft. or range 20/60 ft., one target. {@h}9 ({@damage 1d6 + 6}) piercing damage, or 10 ({@damage 1d8 + 6}) piercing damage if used with two hands to make a melee attack, plus 3 ({@damage 1d6}) lightning damage."
 					]
 				}
 			],
-			"legendaryGroup": "Aerisi Kalinoth",
+			"legendaryGroup": {
+				"name": "Aerisi Kalinoth",
+				"source": "PotA"
+			},
 			"page": 192,
 			"spellcasting": [
 				{
@@ -129,8 +143,24 @@
 								"{@spell chain lightning}"
 							]
 						}
-					}
+					},
+					"ability": "int"
 				}
+			],
+			"traitTags": [
+				"Fey Ancestry",
+				"Legendary Resistances"
+			],
+			"languageTags": [
+				"AU",
+				"C",
+				"E"
+			],
+			"senseTags": [
+				"D"
+			],
+			"spellcastingTags": [
+				"CW"
 			]
 		},
 		{
@@ -141,8 +171,18 @@
 			"alignment": [
 				"N"
 			],
-			"ac": "18 (plate)",
-			"hp": "117 (18d8+36)",
+			"ac": [
+				{
+					"ac": 18,
+					"from": [
+						"{@item plate armor|phb}"
+					]
+				}
+			],
+			"hp": {
+				"average": 117,
+				"formula": "18d8 + 36"
+			},
 			"speed": {
 				"walk": 30,
 				"fly": 30
@@ -196,20 +236,34 @@
 				{
 					"name": "Flail",
 					"entries": [
-						"Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 8 (1d8+4) bludgeoning damage."
+						"{@atk mw} {@hit 7} to hit, reach 5 ft., one target. {@h}8 ({@damage 1d8 + 4}) bludgeoning damage."
 					]
 				},
 				{
-					"name": "Lightning Strike (Recharge 6)",
+					"name": "Lightning Strike {@recharge}",
 					"entries": [
-						"The myrmidon makes one flail attack. If the attack hits, it deals an extra 18 (4d8) lightning damage, and the target must succeed on a DC 14 Constitution saving throw or be stunned until the end of the myrmidon's next turn."
+						"The myrmidon makes one flail attack. If the attack hits, it deals an extra 18 ({@damage 4d8}) lightning damage, and the target must succeed on a DC 14 Constitution saving throw or be {@condition stunned} until the end of the myrmidon's next turn."
 					]
 				}
 			],
-			"page": 212
+			"page": 212,
+			"soundClip": "https://media-waterdeep.cursecdn.com/file-attachments/0/593/air-elemental-myrmidon.mp3",
+			"traitTags": [
+				"Magic Weapons"
+			],
+			"actionTags": [
+				"Multiattack"
+			],
+			"languageTags": [
+				"AU"
+			],
+			"senseTags": [
+				"D"
+			]
 		},
 		{
 			"name": "Bastian Thermandar",
+			"isNpc": true,
 			"size": "M",
 			"type": {
 				"type": "humanoid",
@@ -219,11 +273,21 @@
 			},
 			"source": "PotA",
 			"alignment": [
-				"L",
+				"N",
 				"E"
 			],
-			"ac": "12 (15 with mage armor)",
-			"hp": "78 (12d8+24)",
+			"ac": [
+				12,
+				{
+					"ac": 15,
+					"condition": "with {@spell mage armor}",
+					"braces": true
+				}
+			],
+			"hp": {
+				"average": 78,
+				"formula": "12d8 + 24"
+			},
 			"speed": {
 				"walk": 30
 			},
@@ -248,7 +312,7 @@
 				{
 					"name": "Dagger",
 					"entries": [
-						"Melee or Ranged Weapon Attack: +5 to hit, reach 5 ft. or range 20/60 ft., one target. Hit: 4 (1d4+2) piercing damage."
+						"{@atk mw,rw} {@hit 5} to hit, reach 5 ft. or range 20/60 ft., one target. {@h}4 ({@damage 1d4 + 2}) piercing damage."
 					]
 				}
 			],
@@ -266,7 +330,8 @@
 						"1": [
 							"{@spell burning hands}"
 						]
-					}
+					},
+					"ability": "con"
 				},
 				{
 					"name": "Spellcasting",
@@ -318,8 +383,20 @@
 								"{@spell hold monster}"
 							]
 						}
-					}
+					},
+					"ability": "cha"
 				}
+			],
+			"languageTags": [
+				"C",
+				"IG"
+			],
+			"senseTags": [
+				"D"
+			],
+			"spellcastingTags": [
+				"I",
+				"CS"
 			]
 		},
 		{
@@ -333,11 +410,21 @@
 			},
 			"source": "PotA",
 			"alignment": [
-				"L",
+				"N",
 				"E"
 			],
-			"ac": "18 (plate)",
-			"hp": "39 (6d8+12)",
+			"ac": [
+				{
+					"ac": 18,
+					"from": [
+						"{@item plate armor|phb}"
+					]
+				}
+			],
+			"hp": {
+				"average": 39,
+				"formula": "6d8 + 12"
+			},
 			"speed": {
 				"walk": 30
 			},
@@ -364,7 +451,7 @@
 				{
 					"name": "Morningstar",
 					"entries": [
-						"Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 7 (1d8+3) piercing damage."
+						"{@atk mw} {@hit 5} to hit, reach 5 ft., one target. {@h}7 ({@damage 1d8 + 3}) piercing damage."
 					]
 				}
 			],
@@ -372,11 +459,17 @@
 				{
 					"name": "Unyielding",
 					"entries": [
-						"When the guard is subjected to an effect that would move it, knock it prone, or both, it can use its reaction to be neither moved nor knocked prone."
+						"When the guard is subjected to an effect that would move it, knock it {@condition prone}, or both, it can use its reaction to be neither moved nor knocked {@condition prone}."
 					]
 				}
 			],
-			"page": 195
+			"page": 195,
+			"actionTags": [
+				"Multiattack"
+			],
+			"languageTags": [
+				"C"
+			]
 		},
 		{
 			"name": "Black Earth Priest",
@@ -389,11 +482,21 @@
 			},
 			"source": "PotA",
 			"alignment": [
-				"L",
+				"N",
 				"E"
 			],
-			"ac": "17 (splint)",
-			"hp": "45 (7d8+14)",
+			"ac": [
+				{
+					"ac": 17,
+					"from": [
+						"{@item splint armor|phb}"
+					]
+				}
+			],
+			"hp": {
+				"average": 45,
+				"formula": "7d8 + 14"
+			},
 			"speed": {
 				"walk": 30
 			},
@@ -421,7 +524,7 @@
 				{
 					"name": "Glaive",
 					"entries": [
-						"Melee Weapon Attack: +4 to hit, reach 10 ft., one target. Hit: 7 (1d10+2) slashing damage."
+						"{@atk mw} {@hit 4} to hit, reach 10 ft., one target. {@h}7 ({@damage 1d10 + 2}) slashing damage."
 					]
 				}
 			],
@@ -429,7 +532,7 @@
 				{
 					"name": "Unyielding",
 					"entries": [
-						"When the priest is subjected to an effect that would move it, knock it prone, or both, it can use its reaction to be neither moved nor knocked prone."
+						"When the priest is subjected to an effect that would move it, knock it {@condition prone}, or both, it can use its reaction to be neither moved nor knocked {@condition prone}."
 					]
 				}
 			],
@@ -471,8 +574,19 @@
 								"{@spell slow}"
 							]
 						}
-					}
+					},
+					"ability": "cha"
 				}
+			],
+			"actionTags": [
+				"Multiattack"
+			],
+			"languageTags": [
+				"C",
+				"T"
+			],
+			"spellcastingTags": [
+				"CS"
 			]
 		},
 		{
@@ -486,11 +600,21 @@
 			},
 			"source": "PotA",
 			"alignment": [
-				"L",
+				"N",
 				"E"
 			],
-			"ac": "18 (plate)",
-			"hp": "82 (11d8+33)",
+			"ac": [
+				{
+					"ac": 18,
+					"from": [
+						"{@item plate armor|phb}"
+					]
+				}
+			],
+			"hp": {
+				"average": 82,
+				"formula": "11d8 + 33"
+			},
 			"speed": {
 				"walk": 30
 			},
@@ -527,7 +651,7 @@
 				{
 					"name": "Spear",
 					"entries": [
-						"Melee or Ranged Weapon Attack: +6 to hit, reach 5 ft. or range 20/60 ft., one target. Hit: 7 (1d6+4) piercing damage, or 8 (1d8+4) piercing damage if used with two hands to make a melee attack."
+						"{@atk mw,rw} {@hit 6} to hit, reach 5 ft. or range 20/60 ft., one target. {@h}7 ({@damage 1d6 + 4}) piercing damage, or 8 ({@damage 1d8 + 4}) piercing damage if used with two hands to make a melee attack."
 					]
 				}
 			],
@@ -535,11 +659,17 @@
 				{
 					"name": "Unyielding",
 					"entries": [
-						"When the burrowshark is subjected to an effect that would move it, knock it prone, or both, it can use its reaction to be neither moved nor knocked prone."
+						"When the burrowshark is subjected to an effect that would move it, knock it {@condition prone}, or both, it can use its reaction to be neither moved nor knocked {@condition prone}."
 					]
 				}
 			],
-			"page": 196
+			"page": 196,
+			"actionTags": [
+				"Multiattack"
+			],
+			"languageTags": [
+				"C"
+			]
 		},
 		{
 			"name": "Crushing Wave Priest",
@@ -552,11 +682,21 @@
 			},
 			"source": "PotA",
 			"alignment": [
-				"L",
+				"N",
 				"E"
 			],
-			"ac": "13 (chain shirt)",
-			"hp": "52 (8d8+16)",
+			"ac": [
+				{
+					"ac": 13,
+					"from": [
+						"{@item chain shirt|phb}"
+					]
+				}
+			],
+			"hp": {
+				"average": 52,
+				"formula": "8d8 + 16"
+			},
 			"speed": {
 				"walk": 30
 			},
@@ -578,7 +718,7 @@
 				{
 					"name": "Quarterstaff",
 					"entries": [
-						"Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 6 (1d8+2) bludgeoning damage."
+						"{@atk mw} {@hit 4} to hit, reach 5 ft., one target. {@h}6 ({@damage 1d8 + 2}) bludgeoning damage."
 					]
 				}
 			],
@@ -621,8 +761,16 @@
 								"{@spell sleet storm}"
 							]
 						}
-					}
+					},
+					"ability": "cha"
 				}
+			],
+			"languageTags": [
+				"AQ",
+				"C"
+			],
+			"spellcastingTags": [
+				"CS"
 			]
 		},
 		{
@@ -636,11 +784,21 @@
 			},
 			"source": "PotA",
 			"alignment": [
-				"L",
+				"N",
 				"E"
 			],
-			"ac": "14 (shield)",
-			"hp": "22 (4d8+4)",
+			"ac": [
+				{
+					"ac": 14,
+					"from": [
+						"{@item shield|phb}"
+					]
+				}
+			],
+			"hp": {
+				"average": 22,
+				"formula": "4d8 + 4"
+			},
 			"speed": {
 				"walk": 30
 			},
@@ -661,17 +819,20 @@
 				{
 					"name": "Sharktoothed Longsword",
 					"entries": [
-						"Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 6 (1d8+2) slashing damage, or 7 (1d10+2) slashing damage if used with two hands. Against a target is wearing no armor, the reaver deals an extra die of damage with this sword."
+						"{@atk mw} {@hit 4} to hit, reach 5 ft., one target. {@h}6 ({@damage 1d8 + 2}) slashing damage, or 7 ({@damage 1d10 + 2}) slashing damage if used with two hands. Against a target is wearing no armor, the reaver deals an extra die of damage with this sword."
 					]
 				},
 				{
 					"name": "Javelin",
 					"entries": [
-						"Melee or Ranged Weapon Attack: +4 to hit, reach 5 ft. or range 30/120 ft., one target. Hit: 5 (1d6+2) piercing damage."
+						"{@atk mw,rw} {@hit 4} to hit, reach 5 ft. or range 30/120 ft., one target. {@h}5 ({@damage 1d6 + 2}) piercing damage."
 					]
 				}
 			],
-			"page": 205
+			"page": 205,
+			"languageTags": [
+				"C"
+			]
 		},
 		{
 			"name": "Dark Tide Knight",
@@ -687,8 +848,13 @@
 				"L",
 				"E"
 			],
-			"ac": "13",
-			"hp": "58 (9d8+18)",
+			"ac": [
+				13
+			],
+			"hp": {
+				"average": 58,
+				"formula": "9d8 + 18"
+			},
 			"speed": {
 				"walk": 30
 			},
@@ -715,7 +881,7 @@
 				{
 					"name": "Sneak Attack",
 					"entries": [
-						"The knight deals an extra 7 (2d6) damage when it hits a target with a weapon attack and has advantage on the attack roll, or when the target is within 5 feet of an ally of the knight that isn't incapacitated and the knight doesn't have disadvantage on the attack roll."
+						"The knight deals an extra 7 ({@dice 2d6}) damage when it hits a target with a weapon attack and has advantage on the attack roll, or when the target is within 5 feet of an ally of the knight that isn't {@condition incapacitated} and the knight doesn't have disadvantage on the attack roll."
 					]
 				}
 			],
@@ -729,13 +895,13 @@
 				{
 					"name": "Shortsword",
 					"entries": [
-						"Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 6 (1d6+3) piercing damage."
+						"{@atk mw} {@hit 5} to hit, reach 5 ft., one target. {@h}6 ({@damage 1d6 + 3}) piercing damage."
 					]
 				},
 				{
 					"name": "Lance",
 					"entries": [
-						"Melee Weapon Attack: +5 to hit, reach 10 ft., one target. Hit: 9 (1d12+3) piercing damage."
+						"{@atk mw} {@hit 5} to hit, reach 10 ft., one target. {@h}9 ({@damage 1d12 + 3}) piercing damage."
 					]
 				}
 			],
@@ -747,10 +913,20 @@
 					]
 				}
 			],
-			"page": 205
+			"page": 205,
+			"traitTags": [
+				"Sneak Attack"
+			],
+			"actionTags": [
+				"Multiattack"
+			],
+			"languageTags": [
+				"C"
+			]
 		},
 		{
 			"name": "Drannin Splithelm",
+			"isNpc": true,
 			"size": "M",
 			"type": {
 				"type": "humanoid",
@@ -760,11 +936,21 @@
 			},
 			"source": "PotA",
 			"alignment": [
-				"L",
+				"N",
 				"E"
 			],
-			"ac": "18 (plate)",
-			"hp": "93 (11d8+44)",
+			"ac": [
+				{
+					"ac": 18,
+					"from": [
+						"{@item plate armor|phb}"
+					]
+				}
+			],
+			"hp": {
+				"average": 93,
+				"formula": "11d8 + 44"
+			},
 			"speed": {
 				"walk": 25
 			},
@@ -814,7 +1000,7 @@
 				{
 					"name": "Second Wind (Recharges after a Short or Long Rest)",
 					"entries": [
-						"Drannin can use a bonus action to regain 16 (1d10+11) hit points."
+						"Drannin can use a bonus action to regain 16 ({@dice 1d10 + 11}) hit points."
 					]
 				},
 				{
@@ -834,11 +1020,24 @@
 				{
 					"name": "Greataxe",
 					"entries": [
-						"Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 17 (2d12+4) slashing damage."
+						"{@atk mw} {@hit 7} to hit, reach 5 ft., one target. {@h}17 ({@damage 2d12 + 4}) slashing damage."
 					]
 				}
 			],
-			"page": 210
+			"page": 210,
+			"traitTags": [
+				"Brute"
+			],
+			"actionTags": [
+				"Multiattack"
+			],
+			"languageTags": [
+				"C",
+				"D"
+			],
+			"senseTags": [
+				"D"
+			]
 		},
 		{
 			"name": "Earth Elemental Myrmidon",
@@ -848,8 +1047,18 @@
 			"alignment": [
 				"N"
 			],
-			"ac": "18 (plate)",
-			"hp": "127 (17d8+51)",
+			"ac": [
+				{
+					"ac": 18,
+					"from": [
+						"{@item plate armor|phb}"
+					]
+				}
+			],
+			"hp": {
+				"average": 127,
+				"formula": "17d8 + 51"
+			},
 			"speed": {
 				"walk": 30
 			},
@@ -900,20 +1109,34 @@
 				{
 					"name": "Maul",
 					"entries": [
-						"Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 11 (2d6+4) bludgeoning damage."
+						"{@atk mw} {@hit 7} to hit, reach 5 ft., one target. {@h}11 ({@damage 2d6 + 4}) bludgeoning damage."
 					]
 				},
 				{
-					"name": "Thunderous Strike (Recharge 6)",
+					"name": "Thunderous Strike {@recharge}",
 					"entries": [
-						"The myrmidon makes one maul attack. If the attack hits, it deals an extra 16 (3d10) thunder damage, and the target must succeed on a DC 14 Strength saving throw or be knocked prone."
+						"The myrmidon makes one maul attack. If the attack hits, it deals an extra 16 ({@damage 3d10}) thunder damage, and the target must succeed on a DC 14 Strength saving throw or be knocked {@condition prone}."
 					]
 				}
 			],
-			"page": 212
+			"page": 212,
+			"soundClip": "https://media-waterdeep.cursecdn.com/file-attachments/0/635/earth-elemental-myrmidon.mp3",
+			"traitTags": [
+				"Magic Weapons"
+			],
+			"actionTags": [
+				"Multiattack"
+			],
+			"languageTags": [
+				"T"
+			],
+			"senseTags": [
+				"D"
+			]
 		},
 		{
 			"name": "Elizar Dryflagon",
+			"isNpc": true,
 			"size": "M",
 			"type": {
 				"type": "humanoid",
@@ -923,11 +1146,21 @@
 			},
 			"source": "PotA",
 			"alignment": [
-				"L",
+				"N",
 				"E"
 			],
-			"ac": "14 (hide)",
-			"hp": "71 (11d8+22)",
+			"ac": [
+				{
+					"ac": 14,
+					"from": [
+						"{@item hide armor|phb}"
+					]
+				}
+			],
+			"hp": {
+				"average": 71,
+				"formula": "11d8 + 22"
+			},
 			"speed": {
 				"walk": 30
 			},
@@ -956,7 +1189,7 @@
 				{
 					"name": "Dagger +1",
 					"entries": [
-						"Melee or Ranged Weapon Attack: +6 to hit, reach 5 ft. or range 20/60 ft., one target. Hit: 5 (1d4+3) piercing damage."
+						"{@atk mw,rw} {@hit 6} to hit, reach 5 ft. or range 20/60 ft., one target. {@h}5 ({@damage 1d4 + 3}) piercing damage."
 					]
 				}
 			],
@@ -1007,8 +1240,16 @@
 								"{@spell wall of fire}"
 							]
 						}
-					}
+					},
+					"ability": "wis"
 				}
+			],
+			"languageTags": [
+				"C",
+				"DU"
+			],
+			"spellcastingTags": [
+				"CD"
 			]
 		},
 		{
@@ -1025,8 +1266,23 @@
 				"C",
 				"E"
 			],
-			"ac": "17 (breastplate, shield; 15 while using a crossbow)",
-			"hp": "45 (7d8+14)",
+			"ac": [
+				{
+					"ac": 17,
+					"from": [
+						"{@item breastplate|phb}",
+						"{@item shield|phb}"
+					]
+				},
+				{
+					"ac": 15,
+					"condition": "while using a crossbow"
+				}
+			],
+			"hp": {
+				"average": 45,
+				"formula": "7d8 + 14"
+			},
 			"speed": {
 				"walk": 30
 			},
@@ -1050,7 +1306,7 @@
 				{
 					"name": "Flaming Weapon (Recharges after a Short or Long Rest)",
 					"entries": [
-						"As a bonus action, the guard can wreath one melee weapon it is wielding in flame. The guard is unharmed by this fire, which lasts until the end of the guard's next turn. While wreathed in flame, the weapon deals an extra 3 (1d6) fire damage on a hit."
+						"As a bonus action, the guard can wreath one melee weapon it is wielding in flame. The guard is unharmed by this fire, which lasts until the end of the guard's next turn. While wreathed in flame, the weapon deals an extra 3 ({@damage 1d6}) fire damage on a hit."
 					]
 				}
 			],
@@ -1064,17 +1320,23 @@
 				{
 					"name": "Longsword",
 					"entries": [
-						"Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 6 (1d8+2) slashing damage."
+						"{@atk mw} {@hit 4} to hit, reach 5 ft., one target. {@h}6 ({@damage 1d8 + 2}) slashing damage."
 					]
 				},
 				{
 					"name": "Heavy Crossbow",
 					"entries": [
-						"Ranged Weapon Attack: +3 to hit, range 100/400 ft., one target. Hit: 6 (1d10+1) piercing damage."
+						"{@atk rw} {@hit 3} to hit, range 100/400 ft., one target. {@h}6 ({@damage 1d10 + 1}) piercing damage."
 					]
 				}
 			],
-			"page": 200
+			"page": 200,
+			"actionTags": [
+				"Multiattack"
+			],
+			"languageTags": [
+				"C"
+			]
 		},
 		{
 			"name": "Eternal Flame Priest",
@@ -1087,11 +1349,21 @@
 			},
 			"source": "PotA",
 			"alignment": [
-				"L",
+				"N",
 				"E"
 			],
-			"ac": "12 (15 with mage armor)",
-			"hp": "52 (8d8+16)",
+			"ac": [
+				12,
+				{
+					"ac": 15,
+					"condition": "with {@spell mage armor}",
+					"braces": true
+				}
+			],
+			"hp": {
+				"average": 52,
+				"formula": "8d8 + 16"
+			},
 			"speed": {
 				"walk": 30
 			},
@@ -1116,7 +1388,7 @@
 				{
 					"name": "Dagger",
 					"entries": [
-						"Melee or Ranged Weapon Attack: +4 to hit, reach 5 ft. or range 20/60 ft., one target. Hit: 4 (1d4+2) piercing damage."
+						"{@atk mw,rw} {@hit 4} to hit, reach 5 ft. or range 20/60 ft., one target. {@h}4 ({@damage 1d4 + 2}) piercing damage."
 					]
 				}
 			],
@@ -1158,8 +1430,16 @@
 								"{@spell fireball}"
 							]
 						}
-					}
+					},
+					"ability": "cha"
 				}
+			],
+			"languageTags": [
+				"C",
+				"IG"
+			],
+			"spellcastingTags": [
+				"CS"
 			]
 		},
 		{
@@ -1173,11 +1453,21 @@
 			},
 			"source": "PotA",
 			"alignment": [
-				"L",
+				"N",
 				"E"
 			],
-			"ac": "10 (13 with mage armor)",
-			"hp": "52 (8d8+16)",
+			"ac": [
+				10,
+				{
+					"ac": 13,
+					"condition": "with {@spell mage armor}",
+					"braces": true
+				}
+			],
+			"hp": {
+				"average": 52,
+				"formula": "8d8 + 16"
+			},
 			"speed": {
 				"walk": 30
 			},
@@ -1199,8 +1489,8 @@
 				{
 					"name": "Shapechanger (2/Day)",
 					"entries": [
-						"The fathomer can use its action to polymorph into a Medium serpent composed of water, or back into its true form. Anything the fathomer is wearing or carrying is subsumed into the serpent form during the change, inaccessible until the fathomer returns to its true form. The fathomer reverts to its true form after 4 hours, unless it can expend another use of this trait. If the fathomer is knocked unconscious or dies, it also reverts to its true form.",
-						"While in serpent form, the fathomer gains a swimming speed of 40 feet, the ability to breathe underwater, immunity to poison damage, as well as resistance to fire damage and bludgeoning, piercing, and slashing damage from nonmagical attacks. It also has immunity to the following conditions: exhaustion, grappled, paralyzed, poisoned, restrained, prone, unconscious. The serpent form can enter a hostile creature's space and stop there. In addition, if water can pass through a space, the serpent can do so without squeezing."
+						"The fathomer can use its action to polymorph into a Medium serpent composed of water, or back into its true form. Anything the fathomer is wearing or carrying is subsumed into the serpent form during the change, inaccessible until the fathomer returns to its true form. The fathomer reverts to its true form after 4 hours, unless it can expend another use of this trait. If the fathomer is knocked {@condition unconscious} or dies, it also reverts to its true form.",
+						"While in serpent form, the fathomer gains a swimming speed of 40 feet, the ability to breathe underwater, immunity to poison damage, as well as resistance to fire damage and bludgeoning, piercing, and slashing damage from nonmagical attacks. It also has immunity to the following conditions: {@condition exhaustion}, {@condition grappled}, {@condition paralyzed}, {@condition poisoned}, {@condition restrained}, {@condition prone}, {@condition unconscious}. The serpent form can enter a hostile creature's space and stop there. In addition, if water can pass through a space, the serpent can do so without squeezing."
 					]
 				},
 				{
@@ -1214,13 +1504,13 @@
 				{
 					"name": "Constrict (Serpent Form Only)",
 					"entries": [
-						"Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 9 (2d6+2) bludgeoning damage. If the target is Medium or smaller, it is grappled (escape DC 12). Until the grapple ends, the target is restrained, and the fathomer can't constrict another target."
+						"{@atk mw} {@hit 4} to hit, reach 5 ft., one target. {@h}9 ({@damage 2d6 + 2}) bludgeoning damage. If the target is Medium or smaller, it is {@condition grappled} (escape DC 12). Until the grapple ends, the target is {@condition restrained}, and the fathomer can't constrict another target."
 					]
 				},
 				{
 					"name": "Dagger (Human Form Only)",
 					"entries": [
-						"Melee or Ranged Weapon Attack: +4 to hit, reach 5 ft. or range 20/60 ft., one target. Hit: 4 (1d4+2) piercing damage."
+						"{@atk mw,rw} {@hit 4} to hit, reach 5 ft. or range 20/60 ft., one target. {@h}4 ({@damage 1d4 + 2}) piercing damage."
 					]
 				}
 			],
@@ -1254,13 +1544,22 @@
 							]
 						},
 						"3": {
-							"slots": 0,
+							"slots": 2,
 							"spells": [
 								"{@spell Vampiric touch}"
 							]
 						}
-					}
+					},
+					"ability": "cha"
 				}
+			],
+			"languageTags": [
+				"AQ",
+				"C"
+			],
+			"spellcastingTags": [
+				"F",
+				"CL"
 			]
 		},
 		{
@@ -1277,8 +1576,18 @@
 				"L",
 				"E"
 			],
-			"ac": "16 (scale)",
-			"hp": "33 (6d8+6)",
+			"ac": [
+				{
+					"ac": 16,
+					"from": [
+						"{@item scale mail|phb}"
+					]
+				}
+			],
+			"hp": {
+				"average": 33,
+				"formula": "6d8 + 6"
+			},
 			"speed": {
 				"walk": 30
 			},
@@ -1305,13 +1614,13 @@
 				{
 					"name": "Longsword",
 					"entries": [
-						"Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 6 (1d8+2) slashing damage, or 7 (1d10+2) slashing damage if used with two hands."
+						"{@atk mw} {@hit 4} to hit, reach 5 ft., one target. {@h}6 ({@damage 1d8 + 2}) slashing damage, or 7 ({@damage 1d10 + 2}) slashing damage if used with two hands."
 					]
 				},
 				{
 					"name": "Spear",
 					"entries": [
-						"Melee or Ranged Weapon Attack: +4 to hit, reach 5 ft. or range 20/60 ft., one target. Hit: 5 (1d6+2) piercing damage, or 6 (1d8+2) piercing damage if used with two hands to make a melee attack."
+						"{@atk mw,rw} {@hit 4} to hit, reach 5 ft. or range 20/60 ft., one target. {@h}5 ({@damage 1d6 + 2}) piercing damage, or 6 ({@damage 1d8 + 2}) piercing damage if used with two hands to make a melee attack."
 					]
 				}
 			],
@@ -1338,8 +1647,19 @@
 								"{@spell feather fall}"
 							]
 						}
-					}
+					},
+					"ability": "cha"
 				}
+			],
+			"actionTags": [
+				"Multiattack"
+			],
+			"languageTags": [
+				"AU",
+				"C"
+			],
+			"spellcastingTags": [
+				"CS"
 			]
 		},
 		{
@@ -1350,8 +1670,18 @@
 			"alignment": [
 				"N"
 			],
-			"ac": "18 (plate)",
-			"hp": "117 (18d8+36)",
+			"ac": [
+				{
+					"ac": 18,
+					"from": [
+						"{@item plate armor|phb}"
+					]
+				}
+			],
+			"hp": {
+				"average": 117,
+				"formula": "18d8 + 36"
+			},
 			"speed": {
 				"walk": 40
 			},
@@ -1401,7 +1731,7 @@
 				{
 					"name": "Water Susceptibility",
 					"entries": [
-						"For every 5 feet the myrmidon moves in water, it takes 2 (1d4) cold damage."
+						"For every 5 feet the myrmidon moves in water, it takes 2 ({@damage 1d4}) cold damage."
 					]
 				}
 			],
@@ -1415,17 +1745,31 @@
 				{
 					"name": "Scimitar",
 					"entries": [
-						"Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 7 (1d6+4) slashing damage."
+						"{@atk mw} {@hit 7} to hit, reach 5 ft., one target. {@h}7 ({@damage 1d6 + 4}) slashing damage."
 					]
 				},
 				{
-					"name": "Fiery Strikes (Recharge 6)",
+					"name": "Fiery Strikes {@recharge}",
 					"entries": [
-						"The myrmidon uses Multiattack. Each attack that hits deals an extra 5 (1d10) fire damage."
+						"The myrmidon uses Multiattack. Each attack that hits deals an extra 5 ({@damage 1d10}) fire damage."
 					]
 				}
 			],
-			"page": 213
+			"page": 213,
+			"soundClip": "https://media-waterdeep.cursecdn.com/file-attachments/0/640/fire-elemental-myrmidon.mp3",
+			"traitTags": [
+				"Illumination",
+				"Magic Weapons"
+			],
+			"actionTags": [
+				"Multiattack"
+			],
+			"languageTags": [
+				"IG"
+			],
+			"senseTags": [
+				"D"
+			]
 		},
 		{
 			"name": "Flamewrath",
@@ -1441,8 +1785,18 @@
 				"C",
 				"E"
 			],
-			"ac": "12 (15 with mage armor)",
-			"hp": "105 (14d8+42)",
+			"ac": [
+				12,
+				{
+					"ac": 15,
+					"condition": "with {@spell mage armor}",
+					"braces": true
+				}
+			],
+			"hp": {
+				"average": 105,
+				"formula": "14d8 + 42"
+			},
 			"speed": {
 				"walk": 30
 			},
@@ -1474,7 +1828,7 @@
 				{
 					"name": "Dagger",
 					"entries": [
-						"Melee or Ranged Weapon Attack: +5 to hit, reach 5 ft. or range 20/60 ft., one target. Hit: 4 (1d4+2) piercing damage."
+						"{@atk mw,rw} {@hit 5} to hit, reach 5 ft. or range 20/60 ft., one target. {@h}4 ({@damage 1d4 + 2}) piercing damage."
 					]
 				}
 			],
@@ -1523,12 +1877,21 @@
 								"{@spell fire shield} (see Wreathed in Flame)"
 							]
 						}
-					}
+					},
+					"ability": "cha"
 				}
+			],
+			"languageTags": [
+				"C",
+				"IG"
+			],
+			"spellcastingTags": [
+				"CS"
 			]
 		},
 		{
 			"name": "Gar Shatterkeel",
+			"isNpc": true,
 			"size": "M",
 			"type": {
 				"type": "humanoid",
@@ -1538,11 +1901,21 @@
 			},
 			"source": "PotA",
 			"alignment": [
-				"L",
+				"N",
 				"E"
 			],
-			"ac": "16 (natural armor)",
-			"hp": "30 (15d8+45)",
+			"ac": [
+				{
+					"ac": 16,
+					"from": [
+						"natural armor"
+					]
+				}
+			],
+			"hp": {
+				"average": 97,
+				"formula": "15d8 + 45"
+			},
 			"speed": {
 				"walk": 30,
 				"swim": 30
@@ -1599,17 +1972,20 @@
 				{
 					"name": "Claw",
 					"entries": [
-						"Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 9 (2d6+2) bludgeoning damage, and the target is grappled (escape DC 13). Until the grapple ends, Gar can't attack other creatures with his claw."
+						"{@atk mw} {@hit 6} to hit, reach 5 ft., one target. {@h}9 ({@damage 2d6 + 2}) bludgeoning damage, and the target is {@condition grappled} (escape DC 13). Until the grapple ends, Gar can't attack other creatures with his claw."
 					]
 				},
 				{
 					"name": "Drown",
 					"entries": [
-						"Melee or Ranged Weapon Attack: +7 to hit, reach 5 ft. or range 20/60 ft., one target. Hit: 6 (1d6+3) piercing damage plus 4 (1d8) cold damage."
+						"{@atk mw,rw} {@hit 7} to hit, reach 5 ft. or range 20/60 ft., one target. {@h}6 ({@damage 1d6 + 3}) piercing damage plus 4 ({@damage 1d8}) cold damage."
 					]
 				}
 			],
-			"legendaryGroup": "Gar Shatterkeel",
+			"legendaryGroup": {
+				"name": "Gar Shatterkeel",
+				"source": "PotA"
+			},
 			"page": 208,
 			"spellcasting": [
 				{
@@ -1663,12 +2039,28 @@
 								"{@spell scrying}"
 							]
 						}
-					}
+					},
+					"ability": "wis"
 				}
+			],
+			"traitTags": [
+				"Amphibious",
+				"Legendary Resistances"
+			],
+			"actionTags": [
+				"Multiattack"
+			],
+			"languageTags": [
+				"AQ",
+				"C"
+			],
+			"spellcastingTags": [
+				"CD"
 			]
 		},
 		{
 			"name": "Ghald",
+			"isNpc": true,
 			"size": "L",
 			"type": {
 				"type": "humanoid",
@@ -1681,8 +2073,18 @@
 				"L",
 				"E"
 			],
-			"ac": "15 (natural armor)",
-			"hp": "102 (12d10+36)",
+			"ac": [
+				{
+					"ac": 15,
+					"from": [
+						"natural armor"
+					]
+				}
+			],
+			"hp": {
+				"average": 102,
+				"formula": "12d10 + 36"
+			},
 			"speed": {
 				"walk": 30,
 				"swim": 50
@@ -1693,7 +2095,12 @@
 			"int": 14,
 			"wis": 13,
 			"cha": 17,
-			"save": "Dex +6, Con +6, Int +5, Wis +4",
+			"save": {
+				"dex": "+6",
+				"con": "+6",
+				"int": "+5",
+				"wis": "+4"
+			},
 			"skill": {
 				"insight": "+4",
 				"perception": "+7"
@@ -1724,7 +2131,7 @@
 				{
 					"name": "Sneak Attack",
 					"entries": [
-						"Ghald deals an extra 14 (4d6) damage when he hits a target with a weapon attack and has advantage on the attack roll, or when the target is within 5 feet of an ally of Ghald's that isn't incapacitated and Ghald doesn't have disadvantage on the attack roll."
+						"Ghald deals an extra 14 ({@dice 4d6}) damage when he hits a target with a weapon attack and has advantage on the attack roll, or when the target is within 5 feet of an ally of Ghald's that isn't {@condition incapacitated} and Ghald doesn't have disadvantage on the attack roll."
 					]
 				}
 			],
@@ -1738,26 +2145,40 @@
 				{
 					"name": "Bite",
 					"entries": [
-						"Melee Weapon Attack: +7 to hit, reach 5 ft., one creature. Hit: 9 (2d4+4) piercing damage."
+						"{@atk mw} {@hit 7} to hit, reach 5 ft., one creature. {@h}9 ({@damage 2d4 + 4}) piercing damage."
 					]
 				},
 				{
 					"name": "Shortsword",
 					"entries": [
-						"Melee Weapon Attack: +7 to hit, reach 5 ft., one creature. Hit: 11 (2d6+4) piercing damage."
+						"{@atk mw} {@hit 7} to hit, reach 5 ft., one creature. {@h}11 ({@damage 2d6 + 4}) piercing damage."
 					]
 				},
 				{
 					"name": "Garrote",
 					"entries": [
-						"Melee Weapon Attack: +7 to hit, reach 5 ft., one Medium or Small creature against which Ghald has advantage on the attack roll. Hit: 9 (2d4+4) bludgeoning damage, and the target is grappled (escape DC 15). Until the grapple ends, the target can't breathe, and Ghald has advantage on attack rolls against it."
+						"{@atk mw} {@hit 7} to hit, reach 5 ft., one Medium or Small creature against which Ghald has advantage on the attack roll. {@h}9 ({@damage 2d4 + 4}) bludgeoning damage, and the target is {@condition grappled} (escape DC 15). Until the grapple ends, the target can't breathe, and Ghald has advantage on attack rolls against it."
 					]
 				}
 			],
-			"page": 210
+			"page": 210,
+			"traitTags": [
+				"Sneak Attack"
+			],
+			"actionTags": [
+				"Multiattack"
+			],
+			"languageTags": [
+				"C",
+				"OTH"
+			],
+			"senseTags": [
+				"SD"
+			]
 		},
 		{
 			"name": "Hellenrae",
+			"isNpc": true,
 			"size": "M",
 			"type": {
 				"type": "humanoid",
@@ -1770,10 +2191,15 @@
 				"L",
 				"E"
 			],
-			"ac": "16",
-			"hp": "78 (12d8+24)",
+			"ac": [
+				16
+			],
+			"hp": {
+				"average": 78,
+				"formula": "12d8 + 24"
+			},
 			"speed": {
-				"walk": 30
+				"walk": 50
 			},
 			"str": 13,
 			"dex": 18,
@@ -1806,9 +2232,9 @@
 					]
 				},
 				{
-					"name": "Stunning Strike (Recharge 5\u20146)",
+					"name": "Stunning Strike {@recharge 5}",
 					"entries": [
-						"When Hellenrae hits a target with a melee weapon attack, the target must succeed on a DC 13 Constitution saving throw or be stunned until the end of Hellenrae's next turn."
+						"When Hellenrae hits a target with a melee weapon attack, the target must succeed on a DC 13 Constitution saving throw or be {@condition stunned} until the end of Hellenrae's next turn."
 					]
 				},
 				{
@@ -1834,7 +2260,7 @@
 				{
 					"name": "Unarmed Strike",
 					"entries": [
-						"Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 9 (1d10+4) bludgeoning damage."
+						"{@atk mw} {@hit 7} to hit, reach 5 ft., one target. {@h}9 ({@damage 1d10 + 4}) bludgeoning damage."
 					]
 				}
 			],
@@ -1846,7 +2272,17 @@
 					]
 				}
 			],
-			"page": 198
+			"page": 198,
+			"actionTags": [
+				"Multiattack"
+			],
+			"languageTags": [
+				"C",
+				"T"
+			],
+			"senseTags": [
+				"B"
+			]
 		},
 		{
 			"name": "Howling Hatred Initiate",
@@ -1859,11 +2295,21 @@
 			},
 			"source": "PotA",
 			"alignment": [
-				"L",
+				"N",
 				"E"
 			],
-			"ac": "13 (leather)",
-			"hp": "9 (2d8)",
+			"ac": [
+				{
+					"ac": 13,
+					"from": [
+						"{@item leather armor|phb}"
+					]
+				}
+			],
+			"hp": {
+				"average": 9,
+				"formula": "2d8"
+			},
 			"speed": {
 				"walk": 30
 			},
@@ -1899,11 +2345,17 @@
 				{
 					"name": "Dagger",
 					"entries": [
-						"Melee or Ranged Weapon Attack: +4 to hit, reach 5 ft. or range 20/60 ft., one target. Hit: 4 (1d4+2) piercing damage."
+						"{@atk mw,rw} {@hit 4} to hit, reach 5 ft. or range 20/60 ft., one target. {@h}4 ({@damage 1d4 + 2}) piercing damage."
 					]
 				}
 			],
-			"page": 190
+			"page": 190,
+			"traitTags": [
+				"Hold Breath"
+			],
+			"languageTags": [
+				"C"
+			]
 		},
 		{
 			"name": "Howling Hatred Priest",
@@ -1916,11 +2368,21 @@
 			},
 			"source": "PotA",
 			"alignment": [
-				"L",
+				"N",
 				"E"
 			],
-			"ac": "15 (studded leather)",
-			"hp": "45 (10d8)",
+			"ac": [
+				{
+					"ac": 15,
+					"from": [
+						"{@item studded leather armor|phb}"
+					]
+				}
+			],
+			"hp": {
+				"average": 45,
+				"formula": "10d8"
+			},
 			"speed": {
 				"walk": 30
 			},
@@ -1956,13 +2418,13 @@
 				{
 					"name": "Scimitar",
 					"entries": [
-						"Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 6 (1d6+3) slashing damage."
+						"{@atk mw} {@hit 5} to hit, reach 5 ft., one target. {@h}6 ({@damage 1d6 + 3}) slashing damage."
 					]
 				},
 				{
 					"name": "Dagger",
 					"entries": [
-						"Melee or Ranged Weapon Attack: +5 to hit, reach 5 ft. or range 20/60 ft., one target. Hit: 5 (1d4+3) piercing damage."
+						"{@atk mw,rw} {@hit 5} to hit, reach 5 ft. or range 20/60 ft., one target. {@h}5 ({@damage 1d4 + 3}) piercing damage."
 					]
 				}
 			],
@@ -2004,8 +2466,22 @@
 								"{@spell gaseous form}"
 							]
 						}
-					}
+					},
+					"ability": "cha"
 				}
+			],
+			"traitTags": [
+				"Hold Breath"
+			],
+			"actionTags": [
+				"Multiattack"
+			],
+			"languageTags": [
+				"AU",
+				"C"
+			],
+			"spellcastingTags": [
+				"CS"
 			]
 		},
 		{
@@ -2022,8 +2498,13 @@
 				"L",
 				"E"
 			],
-			"ac": "14",
-			"hp": "33 (6d8+6)",
+			"ac": [
+				14
+			],
+			"hp": {
+				"average": 33,
+				"formula": "6d8 + 6"
+			},
 			"speed": {
 				"walk": 45
 			},
@@ -2063,7 +2544,7 @@
 				{
 					"name": "Unarmed Strike",
 					"entries": [
-						"Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 6 (1d6+3) bludgeoning damage."
+						"{@atk mw} {@hit 5} to hit, reach 5 ft., one target. {@h}6 ({@damage 1d6 + 3}) bludgeoning damage."
 					]
 				}
 			],
@@ -2071,7 +2552,7 @@
 				{
 					"name": "Deflect Missiles",
 					"entries": [
-						"When the hurricane is hit by a ranged weapon attack, it reduces the damage from the attack by 1d10+9. If the damage is reduced to 0, the hurricane can catch the missile if it is small enough to hold in one hand and the hurricane has at least one hand free."
+						"When the hurricane is hit by a ranged weapon attack, it reduces the damage from the attack by {@dice 1d10 + 9}. If the damage is reduced to 0, the hurricane can catch the missile if it is small enough to hold in one hand and the hurricane has at least one hand free."
 					]
 				}
 			],
@@ -2105,8 +2586,19 @@
 								"{@spell gust of wind}"
 							]
 						}
-					}
+					},
+					"ability": "wis"
 				}
+			],
+			"actionTags": [
+				"Multiattack"
+			],
+			"languageTags": [
+				"AU",
+				"C"
+			],
+			"spellcastingTags": [
+				"CS"
 			]
 		},
 		{
@@ -2115,11 +2607,16 @@
 			"type": "elemental",
 			"source": "PotA",
 			"alignment": [
-				"L",
+				"N",
 				"E"
 			],
-			"ac": "17",
-			"hp": "325 (26d12+156)",
+			"ac": [
+				17
+			],
+			"hp": {
+				"average": 325,
+				"formula": "26d12 + 156"
+			},
 			"speed": {
 				"walk": 50,
 				"fly": 50
@@ -2130,7 +2627,11 @@
 			"int": 15,
 			"wis": 16,
 			"cha": 23,
-			"save": "Dex +14, Con +13, Cha +13",
+			"save": {
+				"dex": "+14",
+				"con": "+13",
+				"cha": "+13"
+			},
 			"resist": [
 				{
 					"resist": [
@@ -2168,7 +2669,7 @@
 				{
 					"name": "Fire Aura",
 					"entries": [
-						"At the start of each of Imix's turns, each creature within 10 feet of him takes 17 (5d6) fire damage, and flammable objects in the aura that aren't being worn or carried ignite. A creature also takes 17 (5d6) fire damage if it touches Imix or hits him with a melee attack while within 10 feet of him, and a creature takes that damage the first time on a turn that Imix moves into its space. Nonmagical weapons that hit Imix are destroyed by fire immediately after dealing damage to him"
+						"At the start of each of Imix's turns, each creature within 10 feet of him takes 17 ({@damage 5d6}) fire damage, and flammable objects in the aura that aren't being worn or carried ignite. A creature also takes 17 ({@damage 5d6}) fire damage if it touches Imix or hits him with a melee attack while within 10 feet of him, and a creature takes that damage the first time on a turn that Imix moves into its space. Nonmagical weapons that hit Imix are destroyed by fire immediately after dealing damage to him"
 					]
 				},
 				{
@@ -2206,13 +2707,13 @@
 				{
 					"name": "Slam",
 					"entries": [
-						"Melee Weapon Attack: +12 to hit, reach 10 ft., one target. Hit: 18 (2d10+7) bludgeoning damage plus 18 (5d6) fire damage."
+						"{@atk mw} {@hit 12} to hit, reach 10 ft., one target. {@h}18 ({@damage 2d10 + 7}) bludgeoning damage plus 18 ({@damage 5d6}) fire damage."
 					]
 				},
 				{
 					"name": "Flame Blast",
 					"entries": [
-						"Ranged Spell Attack: +12 to hit, range 250 ft., one target. Hit: 35 (10d6) fire damage."
+						"{@atk rs} {@hit 12} to hit, range 250 ft., one target. {@h}35 ({@damage 10d6}) fire damage."
 					]
 				},
 				{
@@ -2226,10 +2727,7 @@
 				{
 					"name": "Heat Wave",
 					"entries": [
-						"Imix creates a blast of heat within 300 feet of himself. Each creature in the area in physical contact with metal objects (for example, carrying metal weapons or wearing metal armor) takes 9 (2d8) fire damage. Each creature in the area that isn't resistant or immune to fire damage must make a DC 21 Constitution saving throw or gain one level of exhaustion."
-					],
-					"attack": [
-						"Heat Wave||2d8"
+						"Imix creates a blast of heat within 300 feet of himself. Each creature in the area in physical contact with metal objects (for example, carrying metal weapons or wearing metal armor) takes 9 ({@damage 2d8}) fire damage. Each creature in the area that isn't resistant or immune to fire damage must make a DC 21 Constitution saving throw or gain one level of {@condition exhaustion}."
 					]
 				},
 				{
@@ -2241,14 +2739,14 @@
 				{
 					"name": "Combustion (Costs 3 Actions)",
 					"entries": [
-						"Imix causes one creature he can see within 30 feet of him to burst into flames. The target must make a DC 21 Constitution saving throw. On a failed save, the target takes 70 (20d6) fire damage and catches fire. A target on fire takes 10 (3d6) fire damage when it starts its turn, and remains on fire until it or another creature takes an action to douse the flames. On a successful save, the target takes half as much damage and doesn't catch fire."
-					],
-					"attack": [
-						"Combustion||20d6"
+						"Imix causes one creature he can see within 30 feet of him to burst into flames. The target must make a DC 21 Constitution saving throw. On a failed save, the target takes 70 ({@damage 20d6}) fire damage and catches fire. A target on fire takes 10 ({@damage 3d6}) fire damage when it starts its turn, and remains on fire until it or another creature takes an action to douse the flames. On a successful save, the target takes half as much damage and doesn't catch fire."
 					]
 				}
 			],
-			"legendaryGroup": "Imix",
+			"legendaryGroup": {
+				"name": "Imix",
+				"source": "PotA"
+			},
 			"page": 214,
 			"spellcasting": [
 				{
@@ -2266,21 +2764,52 @@
 							"{@spell haste}",
 							"{@spell teleport}"
 						]
-					}
+					},
+					"ability": "cha"
 				}
+			],
+			"isNamedCreature": true,
+			"traitTags": [
+				"Illumination",
+				"Legendary Resistances",
+				"Magic Resistance"
+			],
+			"actionTags": [
+				"Multiattack"
+			],
+			"languageTags": [
+				"C",
+				"IG"
+			],
+			"senseTags": [
+				"B"
+			],
+			"spellcastingTags": [
+				"I"
 			]
 		},
 		{
 			"name": "Marlos Urnrayle",
+			"isNpc": true,
 			"size": "M",
 			"type": "monstrosity",
 			"source": "PotA",
 			"alignment": [
-				"L",
+				"N",
 				"E"
 			],
-			"ac": "15 (natural armor)",
-			"hp": "136 (16d8+64)",
+			"ac": [
+				{
+					"ac": 15,
+					"from": [
+						"natural armor"
+					]
+				}
+			],
+			"hp": {
+				"average": 136,
+				"formula": "16d8 + 64"
+			},
 			"speed": {
 				"walk": 30
 			},
@@ -2324,7 +2853,7 @@
 				{
 					"name": "Petrifying Gaze",
 					"entries": [
-						"When a creature that can see Marlos's eyes starts its turn within 30 feet of him, Marlos can force it to make a DC 14 Constitution saving throw if Marlos isn't incapacitated and can see the creature. If the saving throw fails by 5 or more, the creature is instantly petrified. Otherwise, a creature that fails the save begins to turn to stone and is restrained. The restrained creature must repeat the saving throw at the end of its next turn, becoming petrified on a failure or ending the effect on a success. The petrification lasts until the creature is freed by the {@spell greater restoration} spell or other magic.",
+						"When a creature that can see Marlos's eyes starts its turn within 30 feet of him, Marlos can force it to make a DC 14 Constitution saving throw if Marlos isn't {@condition incapacitated} and can see the creature. If the saving throw fails by 5 or more, the creature is instantly {@condition petrified}. Otherwise, a creature that fails the save begins to turn to stone and is {@condition restrained}. The {@condition restrained} creature must repeat the saving throw at the end of its next turn, becoming {@condition petrified} on a failure or ending the effect on a success. The petrification lasts until the creature is freed by the {@spell greater restoration} spell or other magic.",
 						"Unless surprised, a creature can avert its eyes to avoid the saving throw at the start of its turn. If the creature does so, it can't see Marlos until the start of its next turn, when it can decide to avert its eyes again. If the creature looks at Marlos in the meantime, it must immediately make the save.",
 						"If Marlos sees himself reflected on a polished surface within 30 feet of him and in an area of bright light, Marlos is, due to his curse, affected by his own gaze."
 					]
@@ -2340,21 +2869,39 @@
 				{
 					"name": "Snake Hair",
 					"entries": [
-						"Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 7 (1d8+3) piercing damage plus 14 (4d6) poison damage."
+						"{@atk mw} {@hit 6} to hit, reach 5 ft., one target. {@h}7 ({@damage 1d8 + 3}) piercing damage plus 14 ({@damage 4d6}) poison damage."
 					]
 				},
 				{
 					"name": "Ironfang",
 					"entries": [
-						"Melee Weapon Attack: +9 to hit, reach 5 ft., one target. Hit: 7 (1d8+3) piercing damage plus 4 (1d8) thunder damage."
+						"{@atk mw} {@hit 9} to hit, reach 5 ft., one target. {@h}7 ({@damage 1d8 + 3}) piercing damage plus 4 ({@damage 1d8}) thunder damage."
 					]
 				}
 			],
-			"legendaryGroup": "Marlos Urnrayle",
-			"page": 199
+			"legendaryGroup": {
+				"name": "Marlos Urnrayle",
+				"source": "PotA"
+			},
+			"page": 199,
+			"traitTags": [
+				"Legendary Resistances"
+			],
+			"actionTags": [
+				"Multiattack"
+			],
+			"languageTags": [
+				"C",
+				"T"
+			],
+			"senseTags": [
+				"D",
+				"T"
+			]
 		},
 		{
 			"name": "Miraj Vizann",
+			"isNpc": true,
 			"size": "M",
 			"type": {
 				"type": "humanoid",
@@ -2364,11 +2911,21 @@
 			},
 			"source": "PotA",
 			"alignment": [
-				"L",
+				"N",
 				"E"
 			],
-			"ac": "10 (13 with mage armor)",
-			"hp": "82 (11d8+33)",
+			"ac": [
+				10,
+				{
+					"ac": 13,
+					"condition": "with {@spell mage armor}",
+					"braces": true
+				}
+			],
+			"hp": {
+				"average": 82,
+				"formula": "11d8 + 33"
+			},
 			"speed": {
 				"walk": 30
 			},
@@ -2397,7 +2954,7 @@
 				{
 					"name": "Staff",
 					"entries": [
-						"Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 4 (1d6+1) bludgeoning damage, or 5 (1d8+1) bludgeoning damage when used with two hands."
+						"{@atk mw} {@hit 4} to hit, reach 5 ft., one target. {@h}4 ({@damage 1d6 + 1}) bludgeoning damage, or 5 ({@damage 1d8 + 1}) bludgeoning damage when used with two hands."
 					]
 				}
 			],
@@ -2412,7 +2969,8 @@
 						"1": [
 							"{@spell pass without trace}"
 						]
-					}
+					},
+					"ability": "con"
 				},
 				{
 					"name": "Spellcasting",
@@ -2472,8 +3030,17 @@
 								"{@spell move earth}"
 							]
 						}
-					}
+					},
+					"ability": "cha"
 				}
+			],
+			"languageTags": [
+				"C",
+				"P"
+			],
+			"spellcastingTags": [
+				"I",
+				"CS"
 			]
 		},
 		{
@@ -2482,11 +3049,21 @@
 			"type": "elemental",
 			"source": "PotA",
 			"alignment": [
-				"L",
+				"N",
 				"E"
 			],
-			"ac": "20 (natural armor)",
-			"hp": "526 (27d20+243)",
+			"ac": [
+				{
+					"ac": 20,
+					"from": [
+						"natural armor"
+					]
+				}
+			],
+			"hp": {
+				"average": 526,
+				"formula": "27d20 + 243"
+			},
 			"speed": {
 				"walk": 50,
 				"burrow": 50
@@ -2497,7 +3074,11 @@
 			"int": 11,
 			"wis": 15,
 			"cha": 22,
-			"save": "Str +14, Con +15, Wis +8",
+			"save": {
+				"str": "+14",
+				"con": "+15",
+				"wis": "+8"
+			},
 			"resist": [
 				{
 					"resist": [
@@ -2559,13 +3140,13 @@
 				{
 					"name": "Slam",
 					"entries": [
-						"Melee Weapon Attack: +14 to hit, reach 15 ft., one target. Hit: 30 (4d10+8) bludgeoning damage."
+						"{@atk mw} {@hit 14} to hit, reach 15 ft., one target. {@h}30 ({@damage 4d10 + 8}) bludgeoning damage."
 					]
 				},
 				{
 					"name": "Boulder",
 					"entries": [
-						"Ranged Weapon Attack: +6 to hit, range 500 ft., one target. Hit: 46 (7d10+8) bludgeoning damage. If the target is a creature, it must succeed on a DC 23 Strength saving throw or be knocked prone."
+						"{@atk rw} {@hit 6} to hit, range 500 ft., one target. {@h}46 ({@damage 7d10 + 8}) bludgeoning damage. If the target is a creature, it must succeed on a DC 23 Strength saving throw or be knocked {@condition prone}."
 					]
 				},
 				{
@@ -2579,13 +3160,13 @@
 				{
 					"name": "Illuminating Crystals",
 					"entries": [
-						"Ogrémoch's crystalline protrusions flare. Each creature within 30 feet of Ogrémoch becomes outlined in orange light, shedding dim light in a 10-foot radius. Any attack roll against an affected creature has advantage if the attacker can see it, and the affected creature can't benefit from being invisible."
+						"Ogrémoch's crystalline protrusions flare. Each creature within 30 feet of Ogrémoch becomes outlined in orange light, shedding dim light in a 10-foot radius. Any attack roll against an affected creature has advantage if the attacker can see it, and the affected creature can't benefit from being {@condition invisible}."
 					]
 				},
 				{
 					"name": "Stomp (Costs 2 Actions)",
 					"entries": [
-						"Ogrémoch stomps the ground, creating an earth tremor that extends in a 30-foot radius. Other creatures standing on the ground in that radius must succeed on a DC 23 Dexterity saving throw or fall prone."
+						"Ogrémoch stomps the ground, creating an earth tremor that extends in a 30-foot radius. Other creatures standing on the ground in that radius must succeed on a DC 23 Dexterity saving throw or fall {@condition prone}."
 					]
 				},
 				{
@@ -2595,7 +3176,10 @@
 					]
 				}
 			],
-			"legendaryGroup": "Ogrémoch",
+			"legendaryGroup": {
+				"name": "Ogrémoch",
+				"source": "PotA"
+			},
 			"page": 216,
 			"spellcasting": [
 				{
@@ -2607,8 +3191,29 @@
 						"{@spell meld into stone}",
 						"{@spell move earth}",
 						"{@spell wall of stone}"
-					]
+					],
+					"ability": "cha"
 				}
+			],
+			"isNamedCreature": true,
+			"traitTags": [
+				"Legendary Resistances",
+				"Magic Resistance",
+				"Siege Monster"
+			],
+			"actionTags": [
+				"Multiattack"
+			],
+			"languageTags": [
+				"C",
+				"T"
+			],
+			"senseTags": [
+				"B",
+				"T"
+			],
+			"spellcastingTags": [
+				"I"
 			]
 		},
 		{
@@ -2617,11 +3222,21 @@
 			"type": "elemental",
 			"source": "PotA",
 			"alignment": [
-				"L",
+				"N",
 				"E"
 			],
-			"ac": "18 (natural armor)",
-			"hp": "324 (24d12+168)",
+			"ac": [
+				{
+					"ac": 18,
+					"from": [
+						"natural armor"
+					]
+				}
+			],
+			"hp": {
+				"average": 324,
+				"formula": "24d12 + 168"
+			},
 			"speed": {
 				"walk": 50,
 				"swim": 100
@@ -2632,7 +3247,11 @@
 			"int": 17,
 			"wis": 18,
 			"cha": 23,
-			"save": "Str +11, Con +13, Wis +10",
+			"save": {
+				"str": "+11",
+				"con": "+13",
+				"wis": "+10"
+			},
 			"resist": [
 				"lightning",
 				{
@@ -2698,13 +3317,13 @@
 				{
 					"name": "Slam",
 					"entries": [
-						"Melee Weapon Attack: +11 to hit, reach 10 ft., one target. Hit: 21 (3d10+5) bludgeoning damage, and the target is grappled (escape DC 19). Olhydra can grapple up to four targets. When Olhydra moves, all creatures she is grappling move with her."
+						"{@atk mw} {@hit 11} to hit, reach 10 ft., one target. {@h}21 ({@damage 3d10 + 5}) bludgeoning damage, and the target is {@condition grappled} (escape DC 19). Olhydra can grapple up to four targets. When Olhydra moves, all creatures she is grappling move with her."
 					]
 				},
 				{
 					"name": "Water Jet",
 					"entries": [
-						"Ranged Weapon Attack: +12 to hit, range 120 ft., one target. Hit: 21 (6d6) bludgeoning damage, and the target is knocked prone if it fails a DC 19 Strength saving throw."
+						"{@atk rw} {@hit 12} to hit, range 120 ft., one target. {@h}21 ({@damage 6d6}) bludgeoning damage, and the target is knocked {@condition prone} if it fails a DC 19 Strength saving throw."
 					]
 				},
 				{
@@ -2718,27 +3337,26 @@
 				{
 					"name": "Crush",
 					"entries": [
-						"One creature that Olhydra is grappling is crushed for 21 (3d10+5) bludgeoning damage."
+						"One creature that Olhydra is grappling is crushed for 21 ({@damage 3d10 + 5}) bludgeoning damage."
 					]
 				},
 				{
 					"name": "Fling (Costs 2 Actions)",
 					"entries": [
-						"Olhydra releases one creature she is grappling by flinging the creature up to 60 feet away from her, in a direction of her choice. If the flung creature comes into contact with a solid surface, such as a wall or floor, the creature takes 1d6 bludgeoning damage for every 10 feet it was flung."
+						"Olhydra releases one creature she is grappling by flinging the creature up to 60 feet away from her, in a direction of her choice. If the flung creature comes into contact with a solid surface, such as a wall or floor, the creature takes {@dice 1d6} bludgeoning damage for every 10 feet it was flung."
 					]
 				},
 				{
 					"name": "Water to Acid (Costs 3 Actions)",
 					"entries": [
-						"Olhydra transforms her watery body into acid. This effect lasts until Olhydra's next turn. Any creature that comes into contact with Olhydra or hits her with a melee attack while standing within 5 feet of her takes 11 (2d10) acid damage. Any creature grappled by Olhydra takes 22 (4d10) acid damage at the start of its turn."
-					],
-					"attack": [
-						"Contact||2d10",
-						"Grappled||4d10"
+						"Olhydra transforms her watery body into acid. This effect lasts until Olhydra's next turn. Any creature that comes into contact with Olhydra or hits her with a melee attack while standing within 5 feet of her takes 11 ({@damage 2d10}) acid damage. Any creature {@condition grappled} by Olhydra takes 22 ({@damage 4d10}) acid damage at the start of its turn."
 					]
 				}
 			],
-			"legendaryGroup": "Olhydra",
+			"legendaryGroup": {
+				"name": "Olhydra",
+				"source": "PotA"
+			},
 			"page": 218,
 			"spellcasting": [
 				{
@@ -2756,8 +3374,26 @@
 						"3": [
 							"{@spell ice storm}"
 						]
-					}
+					},
+					"ability": "cha"
 				}
+			],
+			"isNamedCreature": true,
+			"traitTags": [
+				"Legendary Resistances",
+				"Magic Resistance"
+			],
+			"actionTags": [
+				"Multiattack"
+			],
+			"languageTags": [
+				"AQ"
+			],
+			"senseTags": [
+				"B"
+			],
+			"spellcastingTags": [
+				"I"
 			]
 		},
 		{
@@ -2774,8 +3410,18 @@
 				"C",
 				"E"
 			],
-			"ac": "12 (15 with mage armor)",
-			"hp": "49 (9d8+9)",
+			"ac": [
+				12,
+				{
+					"ac": 15,
+					"condition": "with {@spell mage armor}",
+					"braces": true
+				}
+			],
+			"hp": {
+				"average": 49,
+				"formula": "9d8 + 9"
+			},
 			"speed": {
 				"walk": 30
 			},
@@ -2800,7 +3446,7 @@
 				{
 					"name": "Chilling Mist",
 					"entries": [
-						"While it is alive, the one-eyed shiver projects an aura of cold mist within 10 feet of itself. If the one-eyed shiver deals damage to a creature in this area, the creature also takes 5 (1d10) cold damage."
+						"While it is alive, the one-eyed shiver projects an aura of cold mist within 10 feet of itself. If the one-eyed shiver deals damage to a creature in this area, the creature also takes 5 ({@damage 1d10}) cold damage."
 					]
 				}
 			],
@@ -2808,13 +3454,13 @@
 				{
 					"name": "Dagger",
 					"entries": [
-						"Melee Weapon Attack: +4 to hit, reach 5 ft. or range 20/60 ft., one target. Hit: 4 (1d4+2) piercing damage."
+						"{@atk mw} {@hit 4} to hit, reach 5 ft. or range 20/60 ft., one target. {@h}4 ({@damage 1d4 + 2}) piercing damage."
 					]
 				},
 				{
 					"name": "Eye of Frost",
 					"entries": [
-						"The one-eyed shiver casts ray of frost from its missing eye. If it hits, the target is also restrained. A target restrained in this way can end the condition by using an action, succeeding on a DC 13 Strength check."
+						"The one-eyed shiver casts ray of frost from its missing eye. If it hits, the target is also {@condition restrained}. A target {@condition restrained} in this way can end the condition by using an action, succeeding on a DC 13 Strength check."
 					]
 				}
 			],
@@ -2853,12 +3499,20 @@
 								"{@spell fear}"
 							]
 						}
-					}
+					},
+					"ability": "cha"
 				}
+			],
+			"languageTags": [
+				"C"
+			],
+			"spellcastingTags": [
+				"CS"
 			]
 		},
 		{
 			"name": "Oreioth",
+			"isNpc": true,
 			"size": "M",
 			"type": {
 				"type": "humanoid",
@@ -2871,8 +3525,18 @@
 				"C",
 				"E"
 			],
-			"ac": "11 (14 with mage armor)",
-			"hp": "39 (6d8+12)",
+			"ac": [
+				11,
+				{
+					"ac": 14,
+					"condition": "with {@spell mage armor}",
+					"braces": true
+				}
+			],
+			"hp": {
+				"average": 39,
+				"formula": "6d8 + 12"
+			},
 			"speed": {
 				"walk": 30
 			},
@@ -2882,7 +3546,9 @@
 			"int": 16,
 			"wis": 9,
 			"cha": 11,
-			"save": "Wis +1",
+			"save": {
+				"wis": "+1"
+			},
 			"skill": {
 				"arcana": "+5",
 				"investigation": "+5",
@@ -2909,7 +3575,7 @@
 				{
 					"name": "Dagger",
 					"entries": [
-						"Melee Weapon Attack: +3 to hit, reach 5 ft., one target. Hit: 3 (1d4+1) piercing damage."
+						"{@atk mw} {@hit 3} to hit, reach 5 ft., one target. {@h}3 ({@damage 1d4 + 1}) piercing damage."
 					]
 				}
 			],
@@ -2952,8 +3618,16 @@
 								"{@spell vampiric touch}"
 							]
 						}
-					}
+					},
+					"ability": "int"
 				}
+			],
+			"languageTags": [
+				"AB",
+				"C"
+			],
+			"spellcastingTags": [
+				"CW"
 			]
 		},
 		{
@@ -2970,8 +3644,18 @@
 				"C",
 				"E"
 			],
-			"ac": "17 (splint)",
-			"hp": "112 (15d8+75)",
+			"ac": [
+				{
+					"ac": 17,
+					"from": [
+						"{@item splint armor|phb}"
+					]
+				}
+			],
+			"hp": {
+				"average": 112,
+				"formula": "15d8 + 75"
+			},
 			"speed": {
 				"walk": 30
 			},
@@ -2995,13 +3679,13 @@
 				{
 					"name": "Searing Armor",
 					"entries": [
-						"The razerblast's armor is hot. Any creature grappling the razerblast or grappled by it takes 5 (1d10) fire damage at the end of that creature's turn."
+						"The razerblast's armor is hot. Any creature grappling the razerblast or {@condition grappled} by it takes 5 ({@damage 1d10}) fire damage at the end of that creature's turn."
 					]
 				},
 				{
 					"name": "Shrapnel Explosion",
 					"entries": [
-						"When the razerblast drops to 0 hit points, a flaming orb in its chest explodes, destroying the razerblast's body and scattering its armor as shrapnel. Creatures within 10 feet of the razerblast when it explodes must succeed on a DC 12 Dexterity saving throw, taking 21 (6d6) piercing damage on a failed save, or half as much damage on a successful one."
+						"When the razerblast drops to 0 hit points, a flaming orb in its chest explodes, destroying the razerblast's body and scattering its armor as shrapnel. Creatures within 10 feet of the razerblast when it explodes must succeed on a DC 12 Dexterity saving throw, taking 21 ({@damage 6d6}) piercing damage on a failed save, or half as much damage on a successful one."
 					]
 				}
 			],
@@ -3015,11 +3699,18 @@
 				{
 					"name": "Spear",
 					"entries": [
-						"Melee or Ranged Weapon Attack: +6 to hit, reach 5 ft. or range 20/60 ft., one target. Hit: 6 (1d6+3) piercing damage, or 7 (1d8+3) piercing damage if used with two hands to make a melee attack, plus 3 (1d6) fire damage."
+						"{@atk mw,rw} {@hit 6} to hit, reach 5 ft. or range 20/60 ft., one target. {@h}6 ({@damage 1d6 + 3}) piercing damage, or 7 ({@damage 1d8 + 3}) piercing damage if used with two hands to make a melee attack, plus 3 ({@damage 1d6}) fire damage."
 					]
 				}
 			],
-			"page": 201
+			"page": 201,
+			"actionTags": [
+				"Multiattack"
+			],
+			"languageTags": [
+				"C",
+				"IG"
+			]
 		},
 		{
 			"name": "Sacred Stone Monk",
@@ -3035,8 +3726,13 @@
 				"L",
 				"E"
 			],
-			"ac": "14",
-			"hp": "22 (4d8+4)",
+			"ac": [
+				14
+			],
+			"hp": {
+				"average": 22,
+				"formula": "4d8 + 4"
+			},
 			"speed": {
 				"walk": 40
 			},
@@ -3079,7 +3775,7 @@
 				{
 					"name": "Unarmed Strike",
 					"entries": [
-						"Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 5 (1d6+2) bludgeoning damage."
+						"{@atk mw} {@hit 4} to hit, reach 5 ft., one target. {@h}5 ({@damage 1d6 + 2}) bludgeoning damage."
 					]
 				}
 			],
@@ -3091,10 +3787,21 @@
 					]
 				}
 			],
-			"page": 196
+			"page": 196,
+			"actionTags": [
+				"Multiattack",
+				"Parry"
+			],
+			"languageTags": [
+				"C"
+			],
+			"senseTags": [
+				"T"
+			]
 		},
 		{
 			"name": "Shoalar Quanderil",
+			"isNpc": true,
 			"size": "M",
 			"type": {
 				"type": "humanoid",
@@ -3107,8 +3814,18 @@
 				"L",
 				"E"
 			],
-			"ac": "10 (13 with mage armor)",
-			"hp": "60 (8d8+24)",
+			"ac": [
+				10,
+				{
+					"ac": 13,
+					"condition": "with {@spell mage armor}",
+					"braces": true
+				}
+			],
+			"hp": {
+				"average": 60,
+				"formula": "8d8 + 24"
+			},
 			"speed": {
 				"walk": 30,
 				"swim": 30
@@ -3143,7 +3860,7 @@
 				{
 					"name": "Dagger",
 					"entries": [
-						"Melee or Ranged Weapon Attack: +3 to hit, reach 5 ft. or ranged 20/60 ft., one target. Hit: 3 (1d4+1) piercing damage."
+						"{@atk mw,rw} {@hit 3} to hit, reach 5 ft. or ranged 20/60 ft., one target. {@h}3 ({@damage 1d4 + 1}) piercing damage."
 					]
 				}
 			],
@@ -3161,7 +3878,8 @@
 						"1": [
 							"{@spell create or destroy water}"
 						]
-					}
+					},
+					"ability": "con"
 				},
 				{
 					"name": "Spellcasting",
@@ -3199,8 +3917,20 @@
 								"{@spell tidal wave|xge}"
 							]
 						}
-					}
+					},
+					"ability": "cha"
 				}
+			],
+			"traitTags": [
+				"Amphibious"
+			],
+			"languageTags": [
+				"AQ",
+				"C"
+			],
+			"spellcastingTags": [
+				"I",
+				"CS"
 			]
 		},
 		{
@@ -3217,8 +3947,18 @@
 				"C",
 				"E"
 			],
-			"ac": "12 (15 with mage armor)",
-			"hp": "44 (8d8+8)",
+			"ac": [
+				12,
+				{
+					"ac": 15,
+					"condition": "with {@spell mage armor}",
+					"braces": true
+				}
+			],
+			"hp": {
+				"average": 44,
+				"formula": "8d8 + 8"
+			},
 			"speed": {
 				"walk": 30
 			},
@@ -3239,7 +3979,7 @@
 				{
 					"name": "Dagger",
 					"entries": [
-						"Melee or Ranged Weapon Attack: +4 to hit, reach 5 ft. or range 20/60 ft., one target. Hit: 3 (1d4+1) piercing damage."
+						"{@atk mw,rw} {@hit 4} to hit, reach 5 ft. or range 20/60 ft., one target. {@h}3 ({@damage 1d4 + 1}) piercing damage."
 					]
 				}
 			],
@@ -3282,8 +4022,16 @@
 								"{@spell lightning bolt}"
 							]
 						}
-					}
+					},
+					"ability": "cha"
 				}
+			],
+			"languageTags": [
+				"AU",
+				"C"
+			],
+			"spellcastingTags": [
+				"CS"
 			]
 		},
 		{
@@ -3297,11 +4045,21 @@
 			},
 			"source": "PotA",
 			"alignment": [
-				"L",
+				"N",
 				"E"
 			],
-			"ac": "17 (splint)",
-			"hp": "75 (10d8+30)",
+			"ac": [
+				{
+					"ac": 17,
+					"from": [
+						"{@item splint armor|phb}"
+					]
+				}
+			],
+			"hp": {
+				"average": 75,
+				"formula": "10d8 + 30"
+			},
 			"speed": {
 				"walk": 30
 			},
@@ -3323,7 +4081,7 @@
 				{
 					"name": "Death Burst",
 					"entries": [
-						"When the Stonemelder dies, it turns to stone and explodes in a burst of rock shards, becoming a smoking pile of rubble. Each creature within 10 feet of the exploding Stonemelder must make a DC 14 Dexterity saving throw, taking 11 (2d10) bludgeoning damage on a failed save, or half as much damage on a successful one."
+						"When the Stonemelder dies, it turns to stone and explodes in a burst of rock shards, becoming a smoking pile of rubble. Each creature within 10 feet of the exploding Stonemelder must make a DC 14 Dexterity saving throw, taking 11 ({@damage 2d10}) bludgeoning damage on a failed save, or half as much damage on a successful one."
 					]
 				}
 			],
@@ -3331,7 +4089,7 @@
 				{
 					"name": "Black Earth Rod",
 					"entries": [
-						"Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 5 (1d6+2) bludgeoning damage. The Stonemelder can also expend a spell slot to deal extra damage, dealing 2d8 bludgeoning damage for a 1st level slot, plus an additional 1d8 for each level of the slot above 1st."
+						"{@atk mw} {@hit 5} to hit, reach 5 ft., one target. {@h}5 ({@damage 1d6 + 2}) bludgeoning damage. The Stonemelder can also expend a spell slot to deal extra damage, dealing {@dice 2d8} bludgeoning damage for a 1st level slot, plus an additional {@dice 1d8} for each level of the slot above 1st."
 					]
 				}
 			],
@@ -3380,12 +4138,27 @@
 								"{@spell stoneskin}"
 							]
 						}
-					}
+					},
+					"ability": "cha"
 				}
+			],
+			"traitTags": [
+				"Death Burst"
+			],
+			"languageTags": [
+				"C",
+				"T"
+			],
+			"senseTags": [
+				"T"
+			],
+			"spellcastingTags": [
+				"CS"
 			]
 		},
 		{
 			"name": "Thurl Merosska",
+			"isNpc": true,
 			"size": "M",
 			"type": {
 				"type": "humanoid",
@@ -3398,8 +4171,18 @@
 				"L",
 				"E"
 			],
-			"ac": "16 (breastplate)",
-			"hp": "71 (11d8+21)",
+			"ac": [
+				{
+					"ac": 16,
+					"from": [
+						"{@item breastplate|phb}"
+					]
+				}
+			],
+			"hp": {
+				"average": 71,
+				"formula": "11d8 + 21"
+			},
 			"speed": {
 				"walk": 30
 			},
@@ -3428,13 +4211,13 @@
 				{
 					"name": "Greatsword",
 					"entries": [
-						"Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 10 (2d6+3) slashing damage."
+						"{@atk mw} {@hit 5} to hit, reach 5 ft., one target. {@h}10 ({@damage 2d6 + 3}) slashing damage."
 					]
 				},
 				{
 					"name": "Lance",
 					"entries": [
-						"Melee Weapon Attack: +5 to hit, reach 10 ft., one target. Hit: 9 (1d12+3) piercing damage."
+						"{@atk mw} {@hit 5} to hit, reach 10 ft., one target. {@h}9 ({@damage 1d12 + 3}) piercing damage."
 					]
 				}
 			],
@@ -3484,12 +4267,25 @@
 								"{@spell haste}"
 							]
 						}
-					}
+					},
+					"ability": "cha"
 				}
+			],
+			"actionTags": [
+				"Multiattack",
+				"Parry"
+			],
+			"languageTags": [
+				"AU",
+				"C"
+			],
+			"spellcastingTags": [
+				"CS"
 			]
 		},
 		{
 			"name": "Vanifer",
+			"isNpc": true,
 			"size": "M",
 			"type": {
 				"type": "humanoid",
@@ -3499,11 +4295,21 @@
 			},
 			"source": "PotA",
 			"alignment": [
-				"L",
+				"N",
 				"E"
 			],
-			"ac": "15 (studded leather)",
-			"hp": "112 (15d8+45)",
+			"ac": [
+				{
+					"ac": 15,
+					"from": [
+						"{@item studded leather armor|phb}"
+					]
+				}
+			],
+			"hp": {
+				"average": 112,
+				"formula": "15d8 + 45"
+			},
 			"speed": {
 				"walk": 30
 			},
@@ -3549,11 +4355,14 @@
 				{
 					"name": "Tinderstrike",
 					"entries": [
-						"Melee or Ranged Weapon Attack: +9 to hit, reach 5 ft. or range 20/60 ft., one target. Hit: 7 (1d4+5) piercing damage plus 7 (2d6) fire damage."
+						"{@atk mw,rw} {@hit 9} to hit, reach 5 ft. or range 20/60 ft., one target. {@h}7 ({@damage 1d4 + 5}) piercing damage plus 7 ({@damage 2d6}) fire damage."
 					]
 				}
 			],
-			"legendaryGroup": "Vanifer",
+			"legendaryGroup": {
+				"name": "Vanifer",
+				"source": "PotA"
+			},
 			"page": 203,
 			"spellcasting": [
 				{
@@ -3611,8 +4420,26 @@
 								"{@spell dominate person}"
 							]
 						}
-					}
+					},
+					"ability": "cha"
 				}
+			],
+			"traitTags": [
+				"Legendary Resistances"
+			],
+			"actionTags": [
+				"Multiattack"
+			],
+			"languageTags": [
+				"C",
+				"IG",
+				"I"
+			],
+			"senseTags": [
+				"D"
+			],
+			"spellcastingTags": [
+				"CS"
 			]
 		},
 		{
@@ -3623,8 +4450,18 @@
 			"alignment": [
 				"N"
 			],
-			"ac": "18 (plate)",
-			"hp": "127 (17d8+51)",
+			"ac": [
+				{
+					"ac": 18,
+					"from": [
+						"{@item plate armor|phb}"
+					]
+				}
+			],
+			"hp": {
+				"average": 127,
+				"formula": "17d8 + 51"
+			},
 			"speed": {
 				"walk": 40,
 				"swim": 40
@@ -3677,20 +4514,34 @@
 				{
 					"name": "Trident",
 					"entries": [
-						"Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 7 (1d6+4) piercing damage."
+						"{@atk mw} {@hit 7} to hit, reach 5 ft., one target. {@h}7 ({@damage 1d6 + 4}) piercing damage."
 					]
 				},
 				{
-					"name": "Freezing Strikes (Recharge 6)",
+					"name": "Freezing Strikes {@recharge}",
 					"entries": [
-						"The myrmidon uses Multiattack. Each attack that hits deals an extra 5 (1d10) cold damage, and the target's speed is reduced by 10 feet until the end of the myrmidon's next turn."
+						"The myrmidon uses Multiattack. Each attack that hits deals an extra 5 ({@damage 1d10}) cold damage, and the target's speed is reduced by 10 feet until the end of the myrmidon's next turn."
 					]
 				}
 			],
-			"page": 213
+			"page": 213,
+			"soundClip": "https://media-waterdeep.cursecdn.com/file-attachments/0/716/water-elemental-myrmidon.mp3",
+			"traitTags": [
+				"Magic Weapons"
+			],
+			"actionTags": [
+				"Multiattack"
+			],
+			"languageTags": [
+				"AQ"
+			],
+			"senseTags": [
+				"D"
+			]
 		},
 		{
 			"name": "Wiggan Nettlebee",
+			"isNpc": true,
 			"size": "S",
 			"type": {
 				"type": "humanoid",
@@ -3700,11 +4551,21 @@
 			},
 			"source": "PotA",
 			"alignment": [
-				"L",
+				"N",
 				"E"
 			],
-			"ac": "11 (16 with barkskin)",
-			"hp": "36 (8d6+8)",
+			"ac": [
+				11,
+				{
+					"ac": 16,
+					"condition": "with {@spell barkskin}",
+					"braces": true
+				}
+			],
+			"hp": {
+				"average": 36,
+				"formula": "8d6 + 8"
+			},
 			"speed": {
 				"walk": 30
 			},
@@ -3725,7 +4586,7 @@
 				{
 					"name": "Brave Devotion",
 					"entries": [
-						"Wiggan has advantage on saving throws against being charmed or frightened."
+						"Wiggan has advantage on saving throws against being {@condition charmed} or {@condition frightened}."
 					]
 				}
 			],
@@ -3739,7 +4600,7 @@
 				{
 					"name": "Wooden Cane",
 					"entries": [
-						"Melee Weapon Attack: +0 to hit (+4 to hit with shillelagh), reach 5 ft., one target. Hit: 1 (1d4-1) bludgeoning damage, or 6 (1d8+2) bludgeoning damage with shillelagh."
+						"{@atk mw} {@hit 0} to hit ({@hit 4} to hit with shillelagh), reach 5 ft., one target. {@h}1 ({@damage 1d4 - 1}) bludgeoning damage, or 6 ({@damage 1d8 + 2}) bludgeoning damage with shillelagh."
 					]
 				}
 			],
@@ -3778,12 +4639,24 @@
 								"{@spell spiritual weapon}"
 							]
 						}
-					}
+					},
+					"ability": "wis"
 				}
+			],
+			"actionTags": [
+				"Multiattack"
+			],
+			"languageTags": [
+				"C",
+				"H"
+			],
+			"spellcastingTags": [
+				"CC"
 			]
 		},
 		{
 			"name": "Windharrow",
+			"isNpc": true,
 			"size": "M",
 			"type": {
 				"type": "humanoid",
@@ -3793,11 +4666,21 @@
 			},
 			"source": "PotA",
 			"alignment": [
-				"L",
+				"N",
 				"E"
 			],
-			"ac": "15 (studded leather)",
-			"hp": "55 (10d8+10)",
+			"ac": [
+				{
+					"ac": 15,
+					"from": [
+						"{@item studded leather armor|phb}"
+					]
+				}
+			],
+			"hp": {
+				"average": 55,
+				"formula": "10d8 + 10"
+			},
 			"speed": {
 				"walk": 30
 			},
@@ -3822,7 +4705,7 @@
 				{
 					"name": "Fey Ancestry",
 					"entries": [
-						"Windharrow has advantage on saving throws against being charmed, and magic can't put him to sleep."
+						"Windharrow has advantage on saving throws against being {@condition charmed}, and magic can't put him to sleep."
 					]
 				}
 			],
@@ -3836,7 +4719,7 @@
 				{
 					"name": "Rapier",
 					"entries": [
-						"Melee Weapon Attack: +5 to hit, reach 5 ft., one creature. Hit: 7 (1d8+3) piercing damage."
+						"{@atk mw} {@hit 5} to hit, reach 5 ft., one creature. {@h}7 ({@damage 1d8 + 3}) piercing damage."
 					]
 				}
 			],
@@ -3886,8 +4769,26 @@
 								"{@spell dimension door}"
 							]
 						}
-					}
+					},
+					"ability": "cha"
 				}
+			],
+			"traitTags": [
+				"Fey Ancestry"
+			],
+			"actionTags": [
+				"Multiattack"
+			],
+			"languageTags": [
+				"AU",
+				"C",
+				"E"
+			],
+			"senseTags": [
+				"D"
+			],
+			"spellcastingTags": [
+				"CB"
 			]
 		},
 		{
@@ -3896,11 +4797,21 @@
 			"type": "elemental",
 			"source": "PotA",
 			"alignment": [
-				"L",
+				"N",
 				"E"
 			],
-			"ac": "22 (natural armor)",
-			"hp": "283 (21d12+147)",
+			"ac": [
+				{
+					"ac": 22,
+					"from": [
+						"natural armor"
+					]
+				}
+			],
+			"hp": {
+				"average": 283,
+				"formula": "21d12 + 147"
+			},
 			"speed": {
 				"walk": 50,
 				"fly": 150
@@ -3911,7 +4822,11 @@
 			"int": 16,
 			"wis": 21,
 			"cha": 23,
-			"save": "Dex +13, Wis +11, Cha +12",
+			"save": {
+				"dex": "+13",
+				"wis": "+11",
+				"cha": "+12"
+			},
 			"resist": [
 				"cold",
 				"fire",
@@ -3978,13 +4893,13 @@
 				{
 					"name": "Slam",
 					"entries": [
-						"Melee Weapon Attack: +14 to hit, reach 10 ft., one target. Hit: 20 (3d8+7) force damage plus 10 (3d6) lightning damage."
+						"{@atk mw} {@hit 14} to hit, reach 10 ft., one target. {@h}20 ({@damage 3d8 + 7}) force damage plus 10 ({@damage 3d6}) lightning damage."
 					]
 				},
 				{
 					"name": "Thundercrack (Recharges after a Short or Long Rest)",
 					"entries": [
-						"Yan-C-Bin unleashes a terrible thundercrack in a 100-foot radius sphere centered on himself. All other creatures in the area must succeed on a DC 24 Constitution saving throw or take 31 (9d6) thunder damage and be deafened for 1 minute. On a successful save, a creature takes half as much damage and is deafened until the start of Yan-C-Bin's next turn."
+						"Yan-C-Bin unleashes a terrible thundercrack in a 100-foot-radius sphere centered on himself. All other creatures in the area must succeed on a DC 24 Constitution saving throw or take 31 ({@damage 9d6}) thunder damage and be {@condition deafened} for 1 minute. On a successful save, a creature takes half as much damage and is {@condition deafened} until the start of Yan-C-Bin's next turn."
 					]
 				},
 				{
@@ -4004,10 +4919,7 @@
 				{
 					"name": "Peal of Thunder",
 					"entries": [
-						"Yan-C-Bin unleashes a peal of thunder that can be heard out to a range of 300 feet. Each creature within 30 feet of Yan-C-Bin takes 5 (1d10) thunder damage."
-					],
-					"attack": [
-						"Peal of Thunder||1d10"
+						"Yan-C-Bin unleashes a peal of thunder that can be heard out to a range of 300 feet. Each creature within 30 feet of Yan-C-Bin takes 5 ({@damage 1d10}) thunder damage."
 					]
 				},
 				{
@@ -4023,7 +4935,10 @@
 					]
 				}
 			],
-			"legendaryGroup": "Yan-C-Bin",
+			"legendaryGroup": {
+				"name": "Yan-C-Bin",
+				"source": "PotA"
+			},
 			"page": 221,
 			"spellcasting": [
 				{
@@ -4042,8 +4957,26 @@
 							"{@spell cloudkill}",
 							"{@spell haste}"
 						]
-					}
+					},
+					"ability": "cha"
 				}
+			],
+			"isNamedCreature": true,
+			"traitTags": [
+				"Legendary Resistances",
+				"Magic Resistance"
+			],
+			"actionTags": [
+				"Multiattack"
+			],
+			"languageTags": [
+				"AU"
+			],
+			"senseTags": [
+				"B"
+			],
+			"spellcastingTags": [
+				"I"
 			]
 		}
 	]
